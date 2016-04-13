@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height"/>
+        <meta name="msapplication-tap-highlight" content="no" />
+        <title></title>
+        <script type="text/javascript" src="js/mofluid.include-0.0.1.js"></script>
+        <script type="text/javascript" src="lib/jqm.spinbox/jqm.spinbox.min-3.0.js"></script>
+<script type="text/javascript" langauge="javascript">
+ function onDeviceReady() {
+     console.log("device is ready");
+     document.addEventListener("deviceready", onLoad, false);
+ }
+
+ var loading = false;
+ var _top = $(window).scrollTop();
+ var _direction, page = 1,
+     sorttype = "",
+     sortorder = "",
+     categoryfound = 1,
+     product_count = 1,show_pro='',first_load = true,
+     parentstr, total_listed_product = 0;
+ var database = config.app.storage_key;
+ var grandParent = getParameterByName('parent');
+ var parentCategoryId;
+ var cache_expire_time = localStorage['c_time'];
+ var cache_expire_status = localStorage['c_status'];
+ var cache_time = parseInt(parseInt(cache_expire_time) * 60 * 1000);
+ if (cache_expire_status == 0 || cache_expire_status == null) {
+     var cache_time = parseInt(parseInt(config.sqlite_data.cache_time) * 60 * 1000);
+ }
+
+
+
+ function onLoad() {
+
+     try {
+         checkLoginStatus();
+         var MYSTORE = JSON.parse(localStorage[config.app.storage_key + "_store"]);
+         document.title = MYSTORE["store"]["name"];
+         $("#storelabel").html(MYSTORE["store"]["name"]);
+     } catch (err) {
+         console.log(err.message);
+     }
+     $("#searchFilter").attr("placeholder",locale.message.text["search_by_name"]);
+     parentstr = getParameterByName('parent');
+     parentCategoryId = getParameterByName('parent');
+     show_pro = getParameterByName('All');
+     fetchSubCategoryList(parentstr,true);
+     
+     sorttype = $("#sel-sortType").val();
+     sortorder = $("#sel-sortType  :selected").attr("rel");
+     Locale.loadSubCategoryText();
+ }
+ /*
+  *  Fetch Subcategory
+  **/
+ 
+ function fetchSubCategoryList(categoryId, fetchingSecondLevelCategory) {
+     $(".ui-loader").show();
+
+     var db = dbConnection();
+     var current_time = new Date().getTime();
+     var key = 'subcategory_' + categoryId;
+
+
+     db.transaction(function(tx) {
+         // tx.executeSql('DROP TABLE IF EXISTS mofluid_cache');
+         tx.executeSql('CREATE TABLE IF NOT EXISTS mofluid_cache (key text, data text, timestamp text)');
+
+
+         tx.executeSql("select * from mofluid_cache where key='" + key + "';", [], function(tx, resdata) {
+
+             if (resdata.rows.length > 0) {
+
+                 var diff = current_time - resdata.rows.item(0).timestamp;
+                 if (diff > cache_time) {
+
+                     //delete the old row of storedetails data if cache time expire
+
+                     tx.executeSql("DELETE FROM mofluid_cache WHERE key=?", [key],
+                         function(tx, result) {
+
+                         }); // end deletion
+
+
+                     var subcategory_webservice = config.url.api + "?callback=?" + "&store=" + config.store.default+"&categoryid=" + categoryId + "&service=subcategory";
+                     $.ajax({ //Ajax Start
+                         url: subcategory_webservice,
+                         type: "get",
+                         dataType: "jsonp",
+                         beforeSend: function() {
+                             console.log("Before Sub Category List Webservice");
+                         },
+                         error: function() {
+                             navigator.notification.alert(locale.message.alert["try_again"], function() {}, config.app.name, locale.message.button["close"]);
+                             console.log("Error  on Webservice");
+                         },
+                         complete: function() {
+                             console.log("Complete Sub Category List Webservice");
+                         },
+                         success: function(response) {
+                             try {
+                                 results = response["categories"];
+                                 console.log(response);
+                                 if (results == null || results.length <= 0) {
+                                     categoryfound = 0;
+                                     $('#category').html('');
+                                     printProducts(page);
+                                 } else {
+                                     //subcategory  insert query
+                                     $(".ui-loader").hide();
+                                     db.transaction(function(tx) {
+                                         tx.executeSql("INSERT INTO mofluid_cache (key,data,timestamp) VALUES (?,?,?)", ["" + key + "", "" + JSON.stringify(response) + "", "" + current_time + ""], function(tx, res) {}, function(e) {
+                                             console.log("ERROR in insert product: " + e);
+                                         });
+
+                                             //End subcategory  insert query
+                                            
+                                             /*Case When Subcategory Exists therefore display subcategory accordingly*/
+                                             if(fetchingSecondLevelCategory) {
+                                                var activeClass = 'active';
+                                                var sectionId = 'category_text_slider';
+                                                var allLable = '&All=1';
+                                                var level = 2;
+                                             } else {
+                                                var activeClass = 'active';
+                                                var sectionId = 'third_level_cat';
+                                                var allLable = '';
+                                                var level = 3;
+                                             }
+                                             var dirPath = dirname(location.href);
+                                             var fullPath = "'" + dirPath + "/subcategory.html?parent=" + parentstr + "&All=1&level="+level+"'";
+
+                                             var append = '<li class="no-carat" onclick="getSubCategory(this);"><a class="ui-link-inherit no-svg '+activeClass+'" rel=' + fullPath + '><span>' + locale.message.text["all_products"] + '</span></a></li>',
+                                                 catName = '',
+                                                 i = 0;
+                                            
+
+                                             while (i < results.length) {
+                                                 categoryfound = 1;
+                                                 catName = results[i]["name"];
+                                                 catId = results[i]["id"];
+                                                 var imageURL = results[i]["image"];
+                                                 var fullPath = "'" + dirPath + "/subcategory.html?parent=" + catId + "&grand_parent=" + grandParent + allLable+"'";
+                                                 
+                                                 append += '<li class="no-carat" onclick="getSubCategory(this);"><a class="ui-link-inherit no-svg" rel=' + fullPath + '><span>' + catName + '</span></a></li>';
+                                                 
+                                                 i++;
+                                             }
+                                             
+                                             updateList(append,sectionId);
+
+                                             if(categoryfound == 1) {
+                                                $('#category').html('');
+                                                printProducts(page);       
+                                             }
+                                             
+                                     });
+
+
+                                 }
+                             } catch (exc) {
+                                 console.log(" Catch Founds" + exc.message);
+                                 categoryfound = 0;
+                                 printProducts(page);
+                             }
+                         }
+                     }); //Ajax End
+
+
+                 } else {
+
+                     try {
+
+
+                         var response = JSON.parse(resdata.rows.item(0).data);
+                         var results = response["categories"];
+
+                         if (results == null || results.length <= 0) {
+                             categoryfound = 0;
+                             printProducts(page);
+                         } else {
+
+                             $(".ui-loader").hide();
+                             
+
+                             /*Case When Subcategory Exists therefore display subcategory accordingly*/
+                             if(fetchingSecondLevelCategory) {
+                                var activeClass = 'active';
+                                var sectionId = 'category_text_slider';
+                                var allLable = '&All=1';
+                                var level = 2;
+                             } else {
+                                var activeClass = 'active';
+                                var sectionId = 'third_level_cat';
+                                var allLable = '';
+                                var level = 3;
+                             }
+                             var dirPath = dirname(location.href);
+                             var fullPath = "'" + dirPath + "/subcategory.html?parent=" + parentstr + "&All=1&level="+level+"'";
+
+                             var append = '<li class="no-carat" onclick="getSubCategory(this);"><a class="ui-link-inherit no-svg '+activeClass+'" rel=' + fullPath + '><span>' + locale.message.text["all_products"] + '</span></a></li>',
+                                 catName = '',
+                                 i = 0;
+                             
+
+                             while (i < results.length) {
+                                 categoryfound = 1;
+                                 catName = results[i]["name"];
+                                 catId = results[i]["id"];
+                                 var imageURL = results[i]["image"];
+                                 var fullPath = "'" + dirPath + "/subcategory.html?parent=" + catId + "&grand_parent=" + grandParent + allLable+"'";
+                             
+                                 append += '<li class="no-carat" onclick="getSubCategory(this);"><a class="ui-link-inherit no-svg" rel=' + fullPath + '><span>' + catName + '</span></a></li>';
+                             
+                                 i++;
+                             }
+                             
+                             updateList(append,sectionId);
+                             if(categoryfound == 1) {
+                                $('#category').html('');
+                                printProducts(page);       
+                             }
+                             
+                         }
+                     } catch (exc) {
+                         console.log(" Catch Founds" + exc.message);
+                         categoryfound = 0;
+                         //printProducts(page);
+                     }
+
+                     //End time is not expire
+
+                 }
+
+             } else {
+                 var subcategory_webservice = config.url.api + "?callback=?" + "&store=" + config.store.default+"&categoryid=" + categoryId + "&service=subcategory";
+                 $.ajax({ //Ajax Start
+                     url: subcategory_webservice,
+                     type: "get",
+                     dataType: "jsonp",
+                     beforeSend: function() {
+                         console.log("Before Sub Category List Webservice");
+                     },
+                     error: function() {
+                         navigator.notification.alert(locale.message.alert["try_again"], function() {}, config.app.name, locale.message.button["close"]);
+                         console.log("Error  on Webservice");
+                     },
+                     complete: function() {
+                         console.log("Complete Sub Category List Webservice");
+                     },
+                     success: function(response) {
+                         try {
+                             results = response["categories"];
+
+                             if (results == null || results.length <= 0) {
+                                 categoryfound = 0;
+                                 $('#category').html('');
+                                 printProducts(page);
+
+                             } else {
+                                 //Load Category Banner Image
+
+
+                                 //subcategory  insert query
+
+                                 db.transaction(function(tx) {
+                                     tx.executeSql("INSERT INTO mofluid_cache (key,data,timestamp) VALUES (?,?,?)", ["" + key + "", "" + JSON.stringify(response) + "", "" + current_time + ""], function(tx, res) {}, function(e) {
+                                         console.log("ERROR in insert product: " + e);
+                                     });
+                                         //End subcategory  insert query
+
+                                         $(".ui-loader").hide();
+
+                                         /*Case When Subcategory Exists therefore display subcategory accordingly*/
+
+                                         if(fetchingSecondLevelCategory) {
+                                            var activeClass = 'active';
+                                            var sectionId = 'category_text_slider';
+                                            var allLable = '&All=1';
+                                            var level = 2;
+                                         } else {
+                                            var activeClass = 'active';
+                                            var sectionId = 'third_level_cat';
+                                            var allLable = '';
+                                            var level = 3;
+                                         }
+                                         var dirPath = dirname(location.href);
+                                         var fullPath = "'" + dirPath + "/subcategory.html?parent=" + parentstr + "&All=1&level="+level+"'";
+                                         
+                                         var append = '<li class="no-carat" onclick="getSubCategory(this);"><a class="ui-link-inherit no-svg '+activeClass+'" rel=' + fullPath + '><span>' + locale.message.text["all_products"] + '</span></a></li>',
+                                                 catName = '',
+                                                 i = 0;
+                                         
+
+                                         while (i < results.length) {
+                                             categoryfound = 1;
+                                             catName = results[i]["name"];
+                                             catId = results[i]["id"];
+                                             var imageURL = results[i]["image"];
+                                             var fullPath = "'" + dirPath + "/subcategory.html?parent=" + catId + "&grand_parent=" + grandParent + allLable + "'";
+                                             
+                                             append += '<li class="no-carat" onclick="getSubCategory(this);"><a class="ui-link-inherit no-svg" rel=' + fullPath + '><span>' + catName + '</span></a></li>';
+                                             
+                                             i++;
+                                         }
+                                         
+                                         updateList(append,sectionId);
+                                         if(categoryfound == 1) {
+                                            $('#category').html('');
+                                            printProducts(page);       
+                                         }
+                                     
+                                 });
+                             }
+                         } catch (exc) {
+                             console.log(" Catch Founds" + exc.message);
+                             categoryfound = 0;
+                             printProducts(page);
+                         }
+                     }
+                 }); //Ajax End
+
+             }
+         });
+     });
+
+
+
+
+ }
+
+
+
+ /*
+  *Function to implement pagination
+  *@param
+  *return
+  */
+
+ $(document).scroll(function() {
+
+     var _cur_top = $(window).scrollTop();
+
+     if (_top < _cur_top) {
+
+         _direction = 'down';
+
+         if ($(window).scrollTop() >= $(document).height() - $(window).height() - 100) {
+
+             //End of page, load next content here
+             if (loading) {
+
+                 loadNextPage();
+             }
+         }
+     } else {
+
+         _direction = 'up';
+     }
+     console.log(_direction);
+     _top = _cur_top;
+ });
+
+ //Load content for next page
+ function loadNextPage() {
+
+     loading = false;
+     //   var max_product_limit = config.settings.max_product_limit;
+     // if(categoryfound == 0 && max_product_limit > total_listed_product) {
+     printProducts(++page);
+     //}
+ }
+
+ /*
+  *Function Fetch the products according to categorries
+  *@param result
+  *@return
+  */
+
+
+ function printResponse(response) {
+     //alert(response.data.length);
+     //alert(response.total);
+     //alert(product_count);
+     results = response.data;
+     console.log(results);
+     var productList = '';
+     if (product_count > response.total) {
+         if (response.total <= 0) {
+             productList = "<div style='padding-top:20px;'><h2>" + locale.message.text["no_product_found_text"] + "</h2></div>";
+             loading = false;
+             $(".ui-loader").hide();
+             console.log(productList);
+             $("#category").html(productList);
+             $("#category").trigger("create");
+             return;
+         }
+         loading = false;
+         $(".ui-loader").hide();
+     } else {
+         $(".ui-loader").hide();
+         loading = true;
+         if (results.length <= 0 || results == null) {
+             productList = "<div style='padding-top:20px;'><h2>" + locale.message.text["no_product_found_text"] + "</h2></div>";
+         } else {
+             var i = 0;
+             //   var max_product_limit = config.settings.max_product_limit;
+             //  if(max_product_limit <= 0) {
+             //      max_product_limit = results.length;
+             //  }
+             while (i < results.length) {
+                 total_listed_product++;
+                 //Cache the Results on Local Storage
+                 //console.log(results[i]);
+                 var productName = results[i]["name"];
+
+                 var totalProductInCart = Cart.getAll();
+
+                 var pid = results[i]["id"];
+                 var price = results[i]["price"];
+                 //price = CurrencyFormatted(price); //commented to remove trailing zero(.00) from price
+                 price = addThousandsSeparator(price);
+                 var imageURL = results[i]["imageurl"];
+                 var SKU = results[i]["sku"];
+                 var sprice = results[i]["spclprice"];
+                 var product_type = results[i]["type"];
+                 var hasoptions = results[i]["hasoptions"];
+                 var is_stock = '';
+                 if (parseInt(results[i]["is_in_stock"]) > 0 && results[i]["stock_quantity"] > 0) {
+                     is_stock = locale.message.text["in_stock"];
+                     stock_status = "1";
+                 } else {
+                     is_stock = locale.message.text["out_of_stock"];
+                     stock_status = "0";
+                 }
+                 var dirPath = dirname(location.href);
+                 var fullPath = "'" + dirPath + "/product.html?id=" + pid + "stock_status" + stock_status + "'";
+                 var brand_html = results[i]['brands'] ? '<p class="brand-name">'+results[i]['brands']+'</p>' : '';
+                 if (product_type == "simple" && hasoptions == 0) {
+                     var sizeHtml = results[i]['size'] ? '<div class="size-config-wrp"><span class="config-lbl active-config-lbl">'+results[i]['size']+'</span></div>' : '';
+                     if (stock_status == "1") {
+                         var alreadyOrder = 0;
+                         $(totalProductInCart).each(function(v, k) {
+                             if (parseInt(k['id']) == parseInt(results[i]["id"]))
+                                 alreadyOrder = k['quantity'];
+                         });
+
+                         control_button_html = '<div class="cart_product_item_config_quant"><input type="text" class="myinputclassspin " readonly data-role="spinbox" data-mini="true" data-type="horizontal" name="spin" id="cart_item_quantity_' + results[i]["id"] + '" value="' + alreadyOrder + '" min="0" max="' + parseInt(results[i]["stock_quantity"]) + '" onChange="addToCart(this,\'' +Base64.encode(JSON.stringify(results[i])) + '\')"/></div>';
+
+                         if (results[i]["spclprice"] > 0 && results[i]["spclprice"] != price) {
+                             productList += '<div class="product_outer_div"><div class="product_inner_div"><div class="product_img_container"  onclick="parent.location=' + fullPath + '">' + '<img src="' + imageURL + '" class="product_main_img" onerror="bad_image(this);"/></div><div class="product_name_div">'+brand_html + productName + '<div class="product_name_div"><span class="product_special_price_color" style="text-decoration: line-through;">' + Currency.getStoreCurrencySymbol() + price + '</span><span class="product_price_color product_price_color_with_quantity" style="font-weight:bold;text-align:center;"> ' + Currency.getStoreCurrencySymbol() + results[i]["spclprice"] + '</span>' + control_button_html + '</div></div></div>'+sizeHtml+'</div>';
+                         } else {
+                             productList += '<div class="product_outer_div"><div class="product_inner_div"><div class="product_img_container"  onclick="parent.location=' + fullPath + '">' + '<img src="' + imageURL + '" class="product_main_img" onerror="bad_image(this);"/></div><div class="product_name_div">'+brand_html + productName + '<div class="product_name_div product_price_color product_price_color_with_quantity "  style="font-weight:bold;text-align:center;"><div class="cart_product_item_price">' + Currency.getStoreCurrencySymbol() + price + '</div>' + control_button_html + '</div></div></div>'+sizeHtml+'</div>';
+                         }
+                     } else {
+                         if (results[i]["spclprice"] > 0 && results[i]["spclprice"] != price) {
+                             productList += '<div class="product_outer_div"><div class="product_inner_div"><div class="product_img_container"  onclick="parent.location=' + fullPath + '"><img src="' + imageURL + '" class="product_main_img" onerror="bad_image(this);"/></div><div class="product_name_div">'+brand_html + productName + '<div class="product_name_div"><span class="product_special_price_color" style="text-decoration: line-through;">' + Currency.getStoreCurrencySymbol() + price + '</span><span class="product_price_color" style="font-weight:bold;"> ' + Currency.getStoreCurrencySymbol() + results[i]["spclprice"] + '</span></div></div></div>'+sizeHtml+'</div>';
+                         } else {
+                             productList += '<div class="product_outer_div"><div class="product_inner_div"><div class="product_img_container"  onclick="parent.location=' + fullPath + '"><img src="' + imageURL + '" class="product_main_img" onerror="bad_image(this);"/></div><div class="product_name_div">'+brand_html + productName + '<div class="product_name_div product_price_color">' + Currency.getStoreCurrencySymbol() + price + '</div></div></div>'+sizeHtml+'</div>';
+                         }
+                     }
+                 } else if (product_type == "configurable" || hasoptions == 1) {
+                         var confResponse = getConfigurableAttributes(results[i]);
+                         var confHtml = getConfigurableAttributesHtml(confResponse['configLable'],totalProductInCart);
+                         if(!imageURL)
+                            imageURL = confResponse['imageUrl'];
+                         if (results[i]["spclprice"] > 0 && results[i]["spclprice"] != price) {
+                             productList += '<div class="product_outer_div"><div class="product_inner_div clearfix"><div class="product_img_container"  onclick="parent.location=' + fullPath + '"><img src="' + imageURL + '" class="product_main_img" onerror="bad_image(this);"/></div><div class="product_name_div">'+brand_html + productName + '<div class="product_name_div"><span class="product_special_price_color" style="text-decoration: line-through;">' + Currency.getStoreCurrencySymbol() + price + '</span><span class="product_price_color" style="font-weight:bold;"> ' + Currency.getStoreCurrencySymbol() + results[i]["spclprice"] + '</span>'+ confHtml['controlHtml'] + '</div></div></div>'+confHtml['sizeHtml']+'</div>';
+                         } else {
+                             productList += '<div class="product_outer_div"><div class="product_inner_div clearfix"><div class="product_img_container"  onclick="parent.location=' + fullPath + '"><img src="' + imageURL + '" class="product_main_img" onerror="bad_image(this);"/></div><div class="product_name_div">'+brand_html + productName + '<div class="product_name_div"><span class="product_price_color" style="font-weight:bold;">' + Currency.getStoreCurrencySymbol() + price +'</span>'+ confHtml['controlHtml']+'</div></div></div>'+confHtml['sizeHtml']+'</div>';
+                         }
+                 } else if (product_type == "grouped") {
+                     if (results[i]["spclprice"] > 0 && results[i]["spclprice"] != price) {
+                         productList += '<div class="product_outer_div"><div class="product_inner_div"><div class="product_img_container"  onclick="parent.location=' + fullPath + '"><img src="' + imageURL + '" class="product_main_img" onerror="bad_image(this);"/></div><div class="product_name_div">' + brand_html+productName + '<div class="product_name_div"><span class="product_special_price_color" style="text-decoration: line-through;">' + Currency.getStoreCurrencySymbol() + price + '</span><span class="product_price_color" style="font-weight:bold;"> ' + Currency.getStoreCurrencySymbol() + results[i]["spclprice"] + '</span></div></div></div></div>';
+                     } else {
+                         productList += '<div class="product_outer_div"><div class="product_inner_div"><div class="product_img_container"  onclick="parent.location=' + fullPath + '"><img src="' + imageURL + '" class="product_main_img" onerror="bad_image(this);"/></div><div class="product_name_div">' +brand_html+ productName + '<div class="product_name_div"><span class="product_price_color" style="font-weight:bold;">' + Currency.getStoreCurrencySymbol() + price + '</span></div></div></div></div>';
+                     }
+                 }
+                 i++;
+                 product_count++;
+             }
+         }
+     }
+
+     $("#loader_div").hide();
+
+     if (page <= 1 && productList != "") {
+
+         $("#category").html(productList);
+     } else {
+
+
+         $("#category").append(productList);
+     }
+     $("#category").trigger("create");
+
+ }
+
+ function printProducts(page) {
+     $("#Showpro").hide();
+     //$("#category").html('');
+     var append = parent_list = '';
+     var stock_status = "0";
+     $(".ui-loader").show();
+     //Case When No Subcategory Exists therefore display the products under its
+     var CategoryId = parentCategoryId; //getParameterByName('parent');
+     var all_pro = show_pro;
+     var db = dbConnection();
+     var current_time = new Date().getTime();
+     var key = 'subcategory_' + CategoryId;
+     if (page == 1 && sorttype == "entity_id" && sortorder == "desc") //end if all_pro value is equal to 1
+     {
+         if (all_pro == 1) {
+             getallProductsByParentCategory(page);
+         } //end if all_pro value is equal to 1
+         else //end if all_pro value is not equal to 1
+         {
+             db.transaction(function(tx) {
+                 // tx.executeSql('DROP TABLE IF EXISTS mofluid_cache');
+                 tx.executeSql('CREATE TABLE IF NOT EXISTS mofluid_cache (key text, data text, timestamp text)');
+
+                 tx.executeSql("select * from mofluid_cache where key='" + key + "';", [], function(tx, resdata) {
+
+                     if (resdata.rows.length > 0) {
+
+                         var response = JSON.parse(resdata.rows.item(0).data);
+                         printResponse(response);
+                     } else { //If table is empty
+
+                         //noDataofProductInTable(key);
+
+                         $.ajax({ //Ajax Start
+                             url: config.url.api + "?callback=?" + "&store=" + config.store.default+"&categoryid=" + CategoryId + "&service=products&currentpage=" + page + "&pagesize=20&sorttype=" + sorttype + "&sortorder=" + sortorder + "&currency=" + Currency.getStoreCurrency(),
+                             type: "get",
+                             dataType: "jsonp",
+                             beforeSend: function() {
+                                 console.log("Before Sub Category List Webservice");
+                             },
+                             error: function() {
+                                 navigator.notification.alert(locale.message.alert["try_again"], function() {}, config.app.name, locale.message.button["close"]);
+                                 console.log("Error  on Webservice");
+                             },
+                             complete: function() {
+                                 console.log("Complete Sub Category List Webservice");
+                             },
+                             success: function(response) {
+
+                                 //Insert data in table of category ID
+
+                                 db.transaction(function(tx) {
+                                     tx.executeSql("INSERT INTO mofluid_cache (key,data,timestamp) VALUES (?,?,?)", ["" + key + "", "" + JSON.stringify(response) + "", "" + current_time + ""], function(tx, res) {
+                                         console.log("data inserted of products");
+                                     }, function(e) {
+                                         console.log("ERROR in insert product: " + e);
+                                     });
+
+                                 });
+
+                                 printResponse(response);
+
+                             }
+                         }); //End ajax call
+
+                     }
+                 });
+             });
+         } //end if all_pro value is not equal to 1
+     } else {
+
+         printProductsWithOutCache(page);
+     }
+
+ } //End Of function printProducts
+
+ function sortType() {
+
+     sorttype = $("#sel-sortType").val();
+     sortorder = $("#sel-sortType  :selected").attr("rel");
+     total_listed_product = 0;
+     $("#category").html("");
+     product_count = 1;
+     page = 1;
+     if (!first_load) {
+         printProducts(page);
+     } else {
+        first_load = false;
+     }
+
+ }
+
+
+ function getallProducts() {
+
+     var url = "subcategory.html?parent=" + parentstr + "&All=1";
+     redirectTopage(url);
+ }
+
+ function noDataofProductInTable(key) {
+     var CategoryId = parentCategoryId; //getParameterByName('parent');
+     if (CategoryId == "")
+         CategoryId = 0;
+
+     $.ajax({ //Ajax Start
+         url: config.url.api + "?callback=?" + "&store=" + config.store.default+"&categoryid=" + CategoryId + "&service=products&currentpage=" + page + "&pagesize=20&sorttype=" + sorttype + "&sortorder=" + sortorder + "&currency=" + Currency.getStoreCurrency(),
+         type: "get",
+         dataType: "jsonp",
+         beforeSend: function() {
+             console.log("Before Sub Category List Webservice");
+         },
+         error: function() {
+             navigator.notification.alert(locale.message.alert["try_again"], function() {}, config.app.name, locale.message.button["close"]);
+             console.log("Error  on Webservice");
+         },
+         complete: function() {
+             console.log("Complete Sub Category List Webservice");
+         },
+         success: function(response) {
+
+             //Insert data in table of category ID
+
+             db.transaction(function(tx) {
+                 tx.executeSql("INSERT INTO mofluid_cache (key,data,timestamp) VALUES (?,?,?)", ["" + key + "", "" + JSON.stringify(response) + "", "" + current_time + ""], function(tx, res) {}, function(e) {
+                     console.log("ERROR in insert product: " + e);
+                 });
+
+             });
+
+
+             //Insert data in table of category ID
+
+             //alert(response.total);
+
+
+             //  alert("responce"+response.total);
+             printResponse(response);
+
+
+         }
+     }); //End ajax call
+ }
+
+
+
+ function printProductsWithOutCache(page) {
+
+
+     //delete the old row of storedetails data if cache time expire
+     var CategoryId = parentCategoryId; //getParameterByName('parent');
+     if (CategoryId == "")
+         CategoryId = 0;
+
+     $.ajax({ //Ajax Start
+         url: config.url.api + "?callback=?" + "&store=" + config.store.default+"&categoryid=" + CategoryId + "&service=products&currentpage=" + page + "&pagesize=20&sorttype=" + sorttype + "&sortorder=" + sortorder + "&currency=" + Currency.getStoreCurrency(),
+         type: "get",
+         dataType: "jsonp",
+         beforeSend: function() {
+             console.log("Before Sub Category List Webservice");
+         },
+         error: function() {
+             navigator.notification.alert(locale.message.alert["try_again"], function() {}, config.app.name, locale.message.button["close"]);
+             console.log("Error  on Webservice");
+         },
+         complete: function() {
+             console.log("Complete Sub Category List Webservice");
+         },
+         success: function(response) {
+
+             //Insert data in table of category ID
+
+
+             //Insert data in table of category ID
+             // alert(response.total);
+             printResponse(response);
+
+
+         }
+     });
+ }
+
+
+ function getallProductsByParentCategory() {
+
+     $("#Showpro").hide();
+     var append = parent_list = '';
+     var stock_status = "0";
+     $(".ui-loader").show();
+     //Case When No Subcategory Exists therefore display the products under its
+     var CategoryId = parentCategoryId; //getParameterByName('parent');
+     if (CategoryId == "")
+         CategoryId = 0;
+
+     var db = dbConnection();
+     var current_time = new Date().getTime();
+     var key = 'allProducts_' + CategoryId;
+
+
+
+     if (page == 1) //end if all_pro value is equal to 1
+     {
+
+         db.transaction(function(tx) {
+             // tx.executeSql('DROP TABLE IF EXISTS mofluid_cache');
+             tx.executeSql('CREATE TABLE IF NOT EXISTS mofluid_cache (key text, data text, timestamp text)');
+
+             tx.executeSql("select * from mofluid_cache where key='" + key + "';", [], function(tx, resdata) {
+
+                 if (resdata.rows.length > 0) {
+
+                     var diff = current_time - resdata.rows.item(0).timestamp;
+
+                     if (diff > cache_time) {
+
+
+                         tx.executeSql("DELETE FROM mofluid_cache WHERE key=?", [key],
+                             function(tx, result) {
+
+                             });
+                         if (CategoryId == "")
+                             CategoryId = 0;
+
+                         $.ajax({ //Ajax Start
+                             url: config.url.api + "?callback=?" + "&store=" + config.store.default+"&categoryid=" + CategoryId + "&service=products&currentpage=" + page + "&pagesize=20&sorttype=" + sorttype + "&sortorder=" + sortorder + "&currency=" + Currency.getStoreCurrency(),
+                             type: "get",
+                             dataType: "jsonp",
+                             beforeSend: function() {
+                                 console.log("Before Sub Category List Webservice");
+                             },
+                             error: function() {
+                                 navigator.notification.alert(locale.message.alert["try_again"], function() {}, config.app.name, locale.message.button["close"]);
+                                 console.log("Error  on Webservice");
+                             },
+                             complete: function() {
+                                 console.log("Complete Sub Category List Webservice");
+                             },
+                             success: function(response) {
+
+                                 //Insert data in table of category ID
+
+                                 db.transaction(function(tx) {
+                                     tx.executeSql("INSERT INTO mofluid_cache (key,data,timestamp) VALUES (?,?,?)", ["" + key + "", "" + JSON.stringify(response) + "", "" + current_time + ""], function(tx, res) {}, function(e) {
+                                         console.log("ERROR in insert product: " + e);
+                                     });
+
+                                 });
+
+                                 //Insert data in table of category ID
+                                 printResponse(response);
+                             }
+                         });
+
+
+                     } else //If time is not expire
+                     {
+
+                         var response = JSON.parse(resdata.rows.item(0).data);
+
+                         printResponse(response);
+
+
+                     }
+                 } else { //If table is empty
+                     // alert("table is empty");
+
+
+
+                     $.ajax({ //Ajax Start
+                         url: config.url.api + "?callback=?" + "&store=" + config.store.default+"&categoryid=" + CategoryId + "&service=products&currentpage=" + page + "&pagesize=20&sorttype=" + sorttype + "&sortorder=" + sortorder + "&currency=" + Currency.getStoreCurrency(),
+                         type: "get",
+                         dataType: "jsonp",
+                         beforeSend: function() {
+                             console.log("Before Sub Category List Webservice");
+                         },
+                         error: function() {
+                             navigator.notification.alert(locale.message.alert["try_again"], function() {}, config.app.name, locale.message.button["close"]);
+                             console.log("Error  on Webservice");
+                         },
+                         complete: function() {
+                             console.log("Complete Sub Category List Webservice");
+                         },
+                         success: function(response) {
+
+                             //Insert data in table of category ID
+
+                             db.transaction(function(tx) {
+                                 tx.executeSql("INSERT INTO mofluid_cache (key,data,timestamp) VALUES (?,?,?)", ["" + key + "", "" + JSON.stringify(response) + "", "" + current_time + ""], function(tx, res) {}, function(e) {
+                                     console.log("ERROR in insert product: " + e);
+                                 });
+
+                             });
+
+
+                             //Insert data in table of category ID
+
+                             //alert(response.total);
+
+
+                             //  alert("responce"+response.total);
+                             printResponse(response);
+
+
+                         }
+                     }); //End ajax call
+
+
+                 }
+             });
+         });
+
+     } //End of if page equal to 1
+     else {
+         printProductsWithOutCache(page);
+     }
+ }
+
+        </script>
+    </head>
+    <body onLoad="onLoad()">
+        <div data-role="page" id="mainpage" class="product-listing">
+            <div data-role="header" data-position="fixed" data-tap-toggle="false">
+                <div  id="mainheader" class="mainheader" >
+                    <div class="navigation_button">
+                        <img class="" onclick="history.back();" src="media/images/icons/elegant/back_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/back_32x32.png'" />
+                    </div>
+                    
+                    <div class="navigation_button">
+                        <a href="#myPanel">
+                            <img class="navigation_icon" src="media/images/icons/elegant/menu_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/menu_32x32.png'" />
+                        </a>
+                    </div>
+                    
+                    <div class="navigation_search" align="center">
+                        <div class="searchbox">
+                           <form name="serachForm" action="javascript:custom_search();">
+                               <div>
+                                   <input id="searchFilter" class="search-box" type="search" data-type="search" placeholder="" data-theme="a" />
+                                   <ul id="suggestions" data-role="listview" data-inset="true" data-theme="a"></ul>
+                               </div>
+                           </form>
+                       </div>
+                    </div>
+                    
+                    <div class="navigation_cart">
+                        <a href="javascript:void(0);" onclick="redirectTopage('cart.html')">
+                            <img  class="cart_icon" src="media/images/icons/elegant/cart_32x32.png" onerror="this.onerror=null;this.src='images/cart.png'"/>
+                            <div class="cartamount">
+                                <div class="cartNew" id="cartProducts">0</div>
+                            </div>
+                        </a>
+                    </div>
+                    <div id="push-header" style="display:none">
+                        <a href="javascript:hidePush();" style="float: right;margin: 5px 5px 5px 5px;background-color: #e5e5e5;width: 25px;height: 25px;border-radius: 100%;padding: 5px;background-image: url(media/images/icons/elegant/cross_32x32.png);background-position: center;background-size: 80% 80%;margin-right:5px;">&nbsp;</a>
+                        <p id='push-msg' style='text-align:justify;font-weight:400;padding:0px 10px;line-height:17px;font-size:14px;width:95%'>&nbsp;</p>
+                    </div>
+                </div>
+                <div id="category_text_slider">
+                    
+                </div>
+                <div>
+                    <div id="third_level_cat" style="display:none;">
+                        
+                    </div>
+                    <div id="sorting_div" class="category">
+                        <select name="sel-sortType" class="choose-btn" data-mini="true" id="sel-sortType" onChange="sortType();">
+                            <option value="entity_id" rel="desc" id="p1" selected="selected"> </option>
+                            <option value="entity_id" rel="asc" id="p2"></option>
+                            <option value="name" rel="desc" id="p3"></option>
+                            <option value="name" rel="asc" id="p4"> </option>
+                            <option value="price" rel="desc" id="p5"></option>
+                            <option value="price" rel="ASC" id="p6"></option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div data-role="content">
+                <div id="category" class="category" align="center">
+                    <div id="loader_div">
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div data-role="footer" style="display:none"></div>
+            
+            
+            <div data-role="panel" id="myPanel"   data-swipe-close="true"  >
+                <ul data-role="listview" id="left_navigation">
+                    <li id="mofluid_home"><a href="javascript:void(0);" onclick="redirectTopage('index.html');">Home</a></li>
+                </ul>
+                
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE>
+<html lang="en">
+   <head>
+      <script type="text/javascript">
+      function onDeviceReady() {
+           console.log("device is ready");
+           document.addEventListener("deviceready", onLoad, false);
+       }
+      function onLoad(){
+           
+       checkLoginStatus();
+       fetchStoredetail();
+       fetchFeaturesProduct();
+       Locale.loadHomeText();
+       //Going to Register the app for push notification
+        try {
+            var pushNotification = window.plugins.pushNotification;
+            console.log(config);
+            if(config.app.platform == "android") {
+                pushNotification.register(successHandler, errorHandler,{"senderID":config.gcm.id,"ecb":"onNotificationGCM"});
+            }
+            else {
+                pushNotification.register(tokenHandler, errorHandler,{"badge":"true","sound":"true", "alert":"true","ecb":"onNotificationAPN"});
+            }
+        }
+        catch(pn_exception) {
+            setTimeout(function(){
+                try {
+                     var pushNotification = window.plugins.pushNotification;
+                    if(config.app.platform == "android") {
+                        pushNotification.register(successHandler, errorHandler,{"senderID":config.gcm.id,"ecb":"onNotificationGCM"});
+                    }
+                    else {     
+                        pushNotification.register(tokenHandler, errorHandler,{"badge":"true","sound":"true", "alert":"true","ecb":"onNotificationAPN"});
+                    }
+                }
+                catch(pn_support_exception) {
+                    console.log("Push Notification is not supported on Browser ");
+                } 
+            }, 8000);
+        }
+      }
+      function onBackKeyDown(evt) {
+        document.removeEventListener("backbutton", onBackKeyDown, false);
+        $('#search-container').hide()
+      }
+      
+      function goToBanner(ele){
+        window.location.href = $(ele).data('url');
+      }
+      </script>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+      <meta name="format-detection" content="telephone=no" />
+      <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height"/>
+      <meta name="msapplication-tap-highlight" content="no" />
+      <title></title>
+      <script type="text/javascript" src="js/mofluid.include-0.0.1.js"></script>
+   </head>
+   <body onLoad="onLoad()">
+    <div data-role="page" id="mainpage" class="pushnotification">   
+      
+          <div data-role="header" id="mainheader" class="mainheader homepage-header" data-position="fixed" data-tap-toggle="false">
+            <div class="navigation_button">
+                <a href="#myPanel">
+                    <img class="navigation_icon" width="25px" src="media/images/icons/elegant/menu_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/menu_32x32.png'" />
+                </a>
+            </div>
+            <!-- <div class="navigation_logo" align="center">
+                <a href="javascript:void(0);">
+                    <img  class="logo_icon" src="media/images/default/loading.gif" style="height:30px;width:30px;"/>
+                </a>
+            </div> -->
+            <div class="navigation_cart">
+              <a href="#"  class="search_icon" id="search-box-invoker"><img src="home_page/images/search.png" /></a>
+              <a href="javascript:void(0);"  class="cart__icon" onClick="redirectTopage('cart.html')">
+               <img  class="cart_icon" src="media/images/icons/elegant/cart_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/cart_32x32.png'" />
+               <div class="cartamount">
+                <div class="cartNew" id="cartProducts">0</div>
+                </div>
+              </a>
+              <a href="javascript:void(0)" onclick="redirectTopage('login.html');" class="user_icon" id="user_login_icon"><img src="home_page/images/user.png" /></a>
+            </div>
+            <div id="push-header" style="display:none">
+              <a href="javascript:hidePush();" style="float: right;margin: 5px 5px 5px 5px;background-color: #e5e5e5;width: 25px;height: 25px;border-radius: 100%;padding: 5px;background-image: url(media/images/icons/elegant/cross_32x32.png);background-position: center;background-size: 80% 80%;margin-right:5px;">&nbsp;</a>
+               <p id='push-msg' style='text-align:justify;font-weight:400;padding:0px 10px;line-height:17px;font-size:14px;width:95%'>&nbsp;</p>
+            </div>                
+          </div>
+          <div data-role="content">
+          <div class="fataak-service">
+             <div class="container">
+                <div class="row">
+                   <div class="info-set ">
+                      <div class="service-point"><p>Free Shipping Above Rs.<span id="free_shipping_amt"><img  class="logo_icon" src="media/images/default/loading.gif" style="height:12px;width:12px;"/></span></p></div>
+                   </div>
+                   <div class="info-set">
+                      <div class="service-point"><p>3 Hours Delivery</p></div>
+                   </div>
+                   <div class="info-set">
+                      <div class="service-point"><p>COD Also Available</p></div>
+                   </div>
+                   <div class="info-set">
+                      <div class="service-point"><p>Quality You Will Love</p></div>
+                   </div>
+                </div>
+             </div>
+          </div>
+          <div class="slider-sec">
+             <div class="carousel slide" data-ride="carousel">
+                <div class="carousel-inner" role="listbox" id="banner_home_slider">
+                   <img  class="logo_icon" src="media/images/default/loading.gif" style="height:30px;width:30px;"/>
+                </div>
+             </div>
+          </div>
+          <div class="pro-category">
+             <div id="category" class="container" align="center">
+                <img src="media/images/default/loading.gif" />
+             </div>
+          </div>
+          <div class="flower" style="display:none;" onclick="goToBanner(this)">
+             <div class="container">
+                <div class="row">
+                   <div class="col-sm-12">
+                      <div class="bakery-area">
+                         <div class="bakery-text">
+                            <h4>Flower</h4>
+                         </div>
+                         <div class="bakery-img"><img class="img-responsive" alt="img" src="home_page/images/flowers.png">
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+          <div class="discount" style="display:none;" onclick="goToBanner(this)">
+             <div class="container">
+                <div class="row">
+                   <div class="col-sm-12">
+                      <div class="discount-area">
+                         <div class="discount-img">
+                            <img class="img-responsive" src="home_page/images/dis.png" width="69" height="93" alt="img">
+                            <h3 id="discount_amt">15%</h3>
+                         </div>
+                         <div class="offer">
+                            <h4>Discount / Offers</h4>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+          <div class="bakery" style="display:none;" onclick="goToBanner(this)">
+             <div class="container">
+                <div class="row">
+                   <div class="col-sm-12">
+                      <div class="bakery-area">
+                         <div class="bakery-text">
+                            <h4>Bakery</h4>
+                         </div>
+                         <div class="bakery-img"><img class="img-responsive" alt="img" src="home_page/images/backery.png">
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+          <div class="cuisine" style="display:none;" onclick="goToBanner(this)">
+             <div class="container">
+                <div class="row">
+                   <div class="col-sm-12">
+                      <div class="cuision-area">
+                         <div class="cuision-img"><img class="img-responsive" src="home_page/images/cousion.png" width="98" height="98" alt="img">
+                         </div>
+                         <div class="International ">
+                            <h4>International Cuisine</h4>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+          <div class="feature-product">
+             <div class="container">
+                <div class="row">
+                   <div class="col-sm-12">
+                      <div class="feature-pro">
+                         <h2 class="feature-product-text">FEATURED PRODUCT</h2>
+                      </div>
+                      <h3 class="feature-product-line"></h3>
+                   </div>
+                </div>
+                <div id="owl-demo" class="row">
+                   <img  class="logo_icon" src="media/images/default/loading.gif" style="height:30px;width:30px;"/>
+                </div>
+             </div>
+          </div>
+          </div>
+          <footer>
+             <div class="footer">
+                <div class="container">
+                   <div class="row">
+                      <div class="col-sm-12">
+                         <ul class="social">
+                            <li><a href="https://www.facebook.com/fataakse.in"><i class="fa fa-facebook-square"></i></a></li>
+                            <!-- <li><a href="#"><i class="fa fa-twitter-square"></i></a></li>
+                            <li><a href="#"><i class="fa fa-linkedin-square"></i></a></li> -->
+                         </ul>
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </footer>
+          <div data-role="panel" id="myPanel"  data-swipe-close="true"  >
+            <ul data-role="listview" id="left_navigation">
+                <li id="mofluid_home"><a href="javascript:void(0);" onclick="redirectTopage('index.html');" id="mofluid_home_a"></a></li>
+            </ul>
+          </div>
+    </div>
+    <div class="search-container" id="search-container">
+      <div class="search-wrapper">
+        <div class="back-arrow" id="search-back">
+            <img src="media/images/icons/elegant/search_back.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/search_back.png'">
+        </div>
+        <form name="serachForm" action="javascript:custom_search();">
+          <div>
+            <input id="searchFilter" type="search" data-type="search" placeholder="" data-theme="a" />
+            <ul id="suggestions" data-role="listview" data-inset="true" data-theme="a"></ul>
+          </div>
+        </form>
+      </div>
+    </div>
+   </body>
+</html>
+<script type="text/javascript">
+  $(document).ready(function(){
+
+    $('#search-box-invoker').click(function(){
+      document.addEventListener("backbutton", onBackKeyDown, false);
+      $('#search-container').show();
+    });
+
+    $('#search-back').click(function(){
+       document.removeEventListener("backbutton", onBackKeyDown, false);
+        $('#search-container').hide();
+    });
+
+  });
+</script>

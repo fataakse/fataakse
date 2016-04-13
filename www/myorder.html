@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height"/>
+        <meta name="msapplication-tap-highlight" content="no" />
+        <title>Mofluid</title>
+        <script type="text/javascript" src="js/mofluid.include-0.0.1.js"></script>
+        <script type="text/javascript" langauge="javascript">
+            var app_curr_code = Currency.getStoreCurrency();
+            var app_curr_symbol = Currency.getStoreCurrencySymbol();
+            var order_check_arr = new Array();
+            var loading="true";
+            var _top = $(window).scrollTop();
+            var _direction;
+            var page = 1;
+            var product_count=1;
+            
+            function onLoad(){
+                checkLoginStatus();
+                verify_session();
+                displayOrder(1);
+                $("#mofluid_home_a").html(locale.message.button["home"]); 
+                $("#mofluid_myaccount_a").html(locale.message.button["my_account"]);
+                $("#mofluid_editprofile_a").html(locale.message.button["edit_profile"]);
+                $("#mofluid_myorders_a").html(locale.message.button["my_orders"]);
+                $("#mofluid_signout_a").html(locale.message.button["sign_out"]);
+                $("#mofluid_signin_a").html(locale.message.button["sign_in"]);
+                $("#searchFilter").attr("placeholder",locale.message.text["search_by_name"]);
+                try {
+					var MYSTORE = JSON.parse(localStorage[config.app.storage_key+"_store"]);
+					document.title = MYSTORE["store"]["name"];
+					$("#storelabel").html(MYSTORE["store"]["name"]);
+ 				 }
+                      catch (err) {
+                      }
+            }
+        
+        
+        /*
+         *Function to implement pagination
+         *@param
+         *return
+         */
+        
+        $(document).scroll(function(){
+            var _cur_top = $(window).scrollTop();
+            if(_top < _cur_top){
+                _direction = 'down';
+                if ($(window).scrollTop() >= $(document).height() - $(window).height() - 100) {
+                    //End of page, load next content here
+                    if (loading){
+                        loadNextPage();
+                    }
+                }
+            }
+            else{
+                _direction = 'up';
+            }
+            _top = _cur_top;
+            console.log(_direction);
+        });
+                         
+         //Load content for next page
+         function loadNextPage() {
+             displayOrder(++page );
+         }
+        
+        /*
+         *Function to capitalise first letter
+         *@param
+         *@return
+         */
+        function capitaliseFirstLetter(string){
+            try {
+                return string.charAt(0).toUpperCase() + string.slice(1);
+        	  }
+        	  catch (err) {
+        	       return string;
+        	  }
+        }
+function isInArray(value, array) {
+  return array.indexOf(value) > -1;
+}
+        /*
+         *Function to display all orders
+         *@param
+         *return
+         */
+function displayOrder(page){
+    var Session = JSON.parse(localStorage[config.app.storage_key+'_session']);
+    var app_curr_code = Currency.getStoreCurrency();
+    var customerid = Session["customer_id"];
+    var coupon_status="";
+    var discount_amount="";
+    var coupon_code="";
+    var shipmyid="";
+    $(".ui-loader").show();
+    //---Fetch Store Details from Mofluid Magento Web Service
+    console.log(config.url.api+"?callback=?"+"&store="+config.store.default+"&service=myorders&customerid="+customerid+"&currentpage="+page+"&pagesize=2"+"&currency="+app_curr_code);
+    $.getJSON(config.url.api+"?callback=?"+"&store="+config.store.default+"&service=myorders&customerid="+customerid+"&currentpage="+page+"&pagesize=20&currency="+app_curr_code,
+              function (results) {
+              response = results.data;
+              if(product_count>results.total){
+               if(results.total == "0"){
+                      var myorder_msg = "<center><div class='myorder_heading'>" + locale.message.text["you_have_no_orders"] + "</div></center>";
+                      $("#myorder_msg").html(myorder_msg);
+                      
+                      }
+                     
+                loading = false;
+                $(".ui-loader").hide();
+              }
+              else{
+              loading = true;
+               var myorder_msg = "<div class='myorder_heading'>" + locale.message.text["total_orders"].replace("{{totalorder}}",results.total) + "</div>";
+               var order_contents='';
+              
+              for(var i=0;i<response.length;i++) {
+                  app_curr_symbol = response[i]["order_currency_symbol"];
+                  if(isInArray(response[i]["order_id"], order_check_arr)) {
+                      continue;
+                  }
+                  myorder_msg = "<div class='myorder_heading'>" + locale.message.text["total_orders"].replace("{{totalorder}}",results.total) + "</div>";
+                  var current_order_header='',current_order_contents='',billadd,shippadd,billadd_text='',shippadd_text='';
+                  var products, products_table;
+                  order_check_arr.push(response[i]["order_id"]);
+                  current_order_header = locale.message.text["order_id"] +response[i]["order_id"]+"  |  " + locale.message.text["status"] +capitaliseFirstLetter(response[i]["status"]);
+                  billadd = response[i]["billing_address"];
+                  if(billadd["lastname"]==null){
+                      billadd["lastname"]="";
+                  }
+                  shippadd = response[i]["shipping_address"];
+              
+                  //get payment information for each order
+                  var payment_method ='', payment_method_description='',  payment_method_information='';
+                  payment_method_title = response[i]["payment_method"].payment_method_title;
+                  payment_method_description = response[i]["payment_method"].payment_method_description;
+                  if(payment_method_description == "" || payment_method_description == null) {
+                     payment_method_information = payment_method_title;
+                  }
+                  else {
+                      payment_method_description.replace("\n","<br/>");
+                      payment_method_information = payment_method_title+"<br/>"+payment_method_description;
+                  }
+                  billadd_text = billadd["firstname"]+"  "+billadd["lastname"]+"<br>"+"Phone : "+billadd["contactno"]+"<br>"+billadd["street"]+",<br>"+billadd["city"]+", "+billadd["region"]+"<br>"+billadd["countryid"]+", "+billadd["pincode"];
+                  if(shippadd == "" || shippadd == null){
+                      shippadd_text = locale.message.text["no_default_shipping_address"];
+                  }
+                  else{
+                      if(shippadd["lastname"]==null){
+                          shippadd["lastname"]="";
+                      }
+                      shippadd_text = shippadd["firstname"]+"  "+shippadd["lastname"]+"<br>"+"Phone : "+shippadd["contactno"]+"<br>"+shippadd["street"]+",<br>"+shippadd["city"]+", "+shippadd["region"]+"<br>"+shippadd["countryid"]+", "+shippadd["pincode"];
+                  }
+                  products = response[i]["product"];
+                  products_table = '<table style="width:100%;margin:0 auto;" cellspacing="0" id="order_list"><tr><th>' + locale.message.text["sku"] + '</th><th>' + locale.message.text["name"] + '</th><!--th>Image</th--><th>' + locale.message.text["qty"] + '</th><th>' + locale.message.text["price"] + '</th><th>' + locale.message.text["total"] + '</th></tr>';
+                  //products_table = '<table style="width:100%;margin:0 auto;" cellspacing="0" id="order_list"><tr><th>SKU</th><th>Name</th><!--th>Image</th--><th>Qty</th><th>Price</th><th>Total</th></tr>';
+                  for(var j=0;j<products["id"].length;j++) {
+                      var unitprice = Math.round(parseFloat(products["unitprice"][j]) * 100) / 100;
+                      products_table += '<tr><td>'+products["sku"][j]+'</td><td>'+products["name"][j]+'</td><!--td><img src = "'+products["image"][j]+'" class="pro_img" onerror="bad_image(this);"--></td><td>'+parseInt(products["quantity"][j])+'</td><td>'+app_curr_symbol+unitprice+'</td><td>'+app_curr_symbol+parseFloat(unitprice*products["quantity"][j]).toFixed(2)+'</td></tr>';
+                  }
+                  coupon_status=response[i]["couponUsed"];
+                  var tax_amount = 0;
+                  tax_amount = parseFloat(response[i]["tax_amount"]).toFixed(2);
+                  var grand_total = Math.round(parseFloat(response[i]["grand_total"]) * 100) / 100;
+                  grand_total=parseFloat(grand_total).toFixed(2);
+                  var shipping_charge = Math.round(parseFloat(response[i]["shipping_amount"]) * 100) / 100;
+                  shipping_charge=parseFloat(shipping_charge).toFixed(2);
+                  if(coupon_status == "1"){
+			       coupon_code=response[i]["couponCode"];
+			       discount_amount=Math.round(parseFloat(response[i]["discount_amount"]) * 100) / 100;
+			       if(discount_amount<0){
+			   			discount_amount=discount_amount*(-1);
+			   	  }
+			   	  discount_amount=parseFloat(discount_amount).toFixed(2);
+			   	  grand_total=app_curr_symbol+grand_total;
+			       discount_amount="-"+app_curr_symbol+discount_amount;
+			       if(tax_amount > 0) {
+				  	  products_table+='<tr><td colspan="2" style="padding-left:15px;text-align:left">' + locale.message.text["total"] + ' '+locale.message.text["item"] + ' : '+products["total_item_count"]+'</td><td colspan="3" style="text-align:right;">' + locale.message.text["shipping_amount"] +':'+app_curr_symbol+shipping_charge+'</td></tr><tr><td colspan="5" style="text-align:right;padding-right:15px;">'+ locale.message.text["discount"] +' ('+coupon_code+'): '+discount_amount+'</td></tr><tr><td colspan="5" style="text-align:right;padding-right:15px;">'+ locale.message.text["tax"] +':'+app_curr_symbol+tax_amount+'</td></tr><tr><td colspan="5" style="text-align:right;">' + locale.message.text["grand_total"] +' : '+grand_total+'</td></tr></table>';
+			       }
+			   	  else {
+				  	  products_table+='<tr><td colspan="2" style="padding-left:15px;text-align:left">' + locale.message.text["total"] + ' '+locale.message.text["item"] + ' : '+products["total_item_count"]+'</td><td colspan="3" style="text-align:right;">' + locale.message.text["shipping_amount"] +':'+app_curr_symbol+shipping_charge+'</td></tr><tr><td colspan="5" style="text-align:right;padding-right:15px;">'+ locale.message.text["discount"] +' ('+coupon_code+'): '+discount_amount+'</td></tr><tr><td colspan="5" style="text-align:right;">' + locale.message.text["grand_total"] +' : '+grand_total+'</td></tr></table>';
+			       }
+              	   }
+                  else{
+                      grand_total=app_curr_symbol+grand_total;
+			       if(tax_amount > 0) {
+				      products_table+='<tr><td colspan="2" style="padding-left:15px;text-align:left">' + locale.message.text["total"] + ' '+locale.message.text["item"] + ' : '+products["total_item_count"]+'</td><td colspan="3" style="text-align:right;">' + locale.message.text["shipping_amount"] +':'+app_curr_symbol+shipping_charge+'</td></tr><tr><td colspan="5" style="text-align:right;padding-right:15px;">'+ locale.message.text["tax"] +':'+app_curr_symbol+tax_amount+'</td></tr><tr><td colspan="5" style="text-align:right;">' + locale.message.text["grand_total"] +' : '+grand_total+'</td></tr></table>';
+			       }
+			       else {
+				      products_table+='<tr><td colspan="2" style="padding-left:15px;text-align:left">' + locale.message.text["total"] + ' '+ locale.message.text["item"] + ' : '+products["total_item_count"]+'</td><td colspan="3" style="text-align:right;">' + locale.message.text["shipping_amount"] +' : '+app_curr_symbol+shipping_charge+'</td></tr><tr><td colspan="5" style="text-align:right;">' + locale.message.text["grand_total"]  +' : '+grand_total+'</td></tr></table>';
+			       }
+                  }
+              try {
+                  var desc_msg = response[i]["shipping_message"];
+                  if(desc_msg == "" || desc_msg == null) {
+                      desc_msg = locale.message.text["no_shipping_methods_message"];
+                  }
+              }
+              catch(exc) {
+                  var desc_msg = locale.message.text["no_shipping_methods_message"];
+              }
+              current_order_contents = '<table style="width:100%;margin:0 auto;">'+
+              '<tr><td class="width48 order_heading">' + locale.message.text["order_id"] + '</td><td class="width48 order_data">'+response[i]["order_id"]+'</td></tr>'+
+              '<tr><td class="width48 order_heading">' + locale.message.text["order"] + locale.message.text["status"] + '</td><td class="width48 order_data">'+capitaliseFirstLetter(response[i]["status"])+'</td></tr>'+
+              '<tr><td class="width48 order_heading">' + locale.message.text["payment_method"] + '</td><td class="width48 order_data">'+payment_method_information+'</td></tr>'+
+              '<tr><td class="width48 order_heading">' + locale.message.text["shipping_method"] + '</td><td class="width48 order_data">'+desc_msg+'</td></tr>'+
+              '<tr><td class="width48 order_heading">' + locale.message.text["total_amount"] + '</td><td class="width48 order_data">'+grand_total+'</td></tr>'+
+              '<tr><td class="width48 order_heading">' + locale.message.text["billing_address"] + '</td><td class="width48 order_data">'+billadd_text+'</td></tr>'+
+              '<tr><td class="width48 order_heading">' + locale.message.text["shipping_address"] + '</td><td class="width48 order_data">'+shippadd_text+'</td></tr>'+
+              '<tr><td colspan=2 style="text-align:left;border:none" class="order_heading">' + locale.message.text["order"] + locale.message.text["products"]  + '</td></tr>'+
+              '<tr><td colspan=2 style="border:none">'+products_table+'</td></tr>'
+              +'</table>';
+              var $current_order_contents_div = $('<div id="order'+i+'" data-role="collapsible" data-inset="false" data-collapsed-icon="arrow-r" data-expanded-icon="arrow-d" data-theme="d"><h3>'+current_order_header+'</h3><div id="ordercontents">'+current_order_contents+'</div></div>').appendTo($('#myorder_content'));
+              $current_order_contents_div.collapsible();
+                product_count++;
+              }
+              $("#myorder_msg").html(myorder_msg);
+               $("#order0").trigger("expand");
+              }
+              $(".ui-loader").hide();
+              });
+
+}
+        
+            </script>
+    </head>
+    <body onLoad="onLoad()">
+        <div data-role="page" id="mainpage" >
+            
+            <div data-role="header" data-position="fixed" data-tap-toggle="false">
+            <div id="mainheader" class="mainheader">
+                <div class="navigation_button">
+                        <img class="" onclick="history.back();" src="media/images/icons/elegant/back_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/back_32x32.png'" />
+                </div>
+                <div class="navigation_button">
+                    <a href="#myPanel">
+                        <img class="navigation_icon" src="media/images/icons/elegant/menu_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/menu_32x32.png'" />
+                    </a>
+                </div>
+                
+                <div class="navigation_search" align="center">
+                    <div class="searchbox">
+                       <form name="serachForm" action="javascript:custom_search();">
+                           <div>
+                               <input id="searchFilter" class="search-box" type="search" data-type="search" placeholder="" data-theme="a" />
+                               <ul id="suggestions" data-role="listview" data-inset="true" data-theme="a"></ul>
+                           </div>
+                       </form>
+                   </div>
+                </div>
+                
+                <div class="navigation_cart">
+                    <a href="javascript:void(0);" onclick="redirectTopage('cart.html')">
+                        <img  class="cart_icon" src="media/images/icons/elegant/cart_32x32.png" onerror="this.onerror=null;this.src='images/cart.png'"/>
+                        <div class="cartamount">
+                            <div class="cartNew" id="cartProducts">0</div>
+                        </div>
+                    </a>
+                </div>
+            <div id="push-header" style="display:none">
+                   <a href="javascript:hidePush();" style="float: right;margin: 5px 5px 5px 5px;background-color: #e5e5e5;width: 25px;height: 25px;border-radius: 100%;padding: 5px;background-image: url(media/images/icons/elegant/cross_32x32.png);background-position: center;background-size: 80% 80%;margin-right:5px;">&nbsp;</a>
+                   <p id='push-msg' style='text-align:justify;font-weight:400;padding:0px 10px;line-height:17px;font-size:14px;width:95%'>&nbsp;</p>
+               </div>
+            </div>
+            </div>
+            
+            <div data-role="content">
+                
+                <div id="loginbox" class="loginbox" align="center">
+                    
+                    <div id="myorder_msg" style="text-align:left;"></div>
+                    <div id="myorder_content">
+                   
+                    </div>
+
+                    
+                </div>
+                
+            </div>
+            
+            <div data-role="footer" style="display:none"></div>
+            
+            
+            <div data-role="panel" id="myPanel"   data-swipe-close="true"  >
+                <ul data-role="listview" id="left_navigation">
+                    <li id="mofluid_home"><a href="javascript:void(0);" onclick="redirectTopage('index.html');">Home</a></li>
+                </ul>
+                
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height"/>
+        <meta name="msapplication-tap-highlight" content="no" />
+        <title>Mofluid</title>
+       <script type="text/javascript" src="js/mofluid.include-0.0.1.js"></script>
+       <script type="text/javascript">
+         function retrieveProductInfo() {
+			$("#searchFilter").attr("placeholder",locale.message.text["search_by_name"]);
+			checkLoginStatus();
+			Locale.loadProductDetailText();
+			var product_id = getParameterByName("id");
+			var product = getProductInfoById(product_id, renderProductInfo);
+			
+			$("#cartProducts").html(Cart.getTotalQuantity());
+		}
+				 
+            
+       </script>
+    </head>
+    <body onload="retrieveProductInfo()">
+        <div data-role="page" id="mainpage" >
+            <div data-role="header" data-position="fixed" data-tap-toggle="false">
+            <div id="mainheader" class="mainheader">
+                <div class="navigation_button">
+                    <img class="" onclick="history.back();" src="media/images/icons/elegant/back_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/back_32x32.png'" />
+                </div>
+                <div class="navigation_button">
+                    <a href="#myPanel">
+                        <img class="navigation_icon" src="media/images/icons/elegant/menu_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/menu_32x32.png'" />
+                    </a>
+                </div>
+                <div class="navigation_search" align="center">
+                    <div class="searchbox">
+                       <form name="serachForm" action="javascript:custom_search();">
+                           <div>
+                               <input id="searchFilter" class="search-box" type="search" data-type="search" placeholder="" data-theme="a" />
+                               <ul id="suggestions" data-role="listview" data-inset="true" data-theme="a"></ul>
+                           </div>
+                       </form>
+                   </div>
+                </div>
+                <div class="navigation_cart">
+                    <a href="javascript:void(0);" onclick="redirectTopage('cart.html')">
+                        <img  class="cart_icon" src="media/images/icons/elegant/cart_32x32.png" onerror="this.onerror=null;this.src='images/cart.png'"/>
+                        <div class="cartamount">
+                            <div class="cartNew" id="cartProducts">0</div>
+                        </div>
+                    </a>
+                </div><!--navigation_cart-->
+                <div id="push-header" style="display:none">
+                    <a href="javascript:hidePush();" style="float: right;margin: 5px 5px 5px 5px;background-color: #e5e5e5;width: 25px;height: 25px;border-radius: 100%;padding: 5px;background-image: url(media/images/icons/elegant/cross_32x32.png);background-position: center;background-size: 80% 80%;margin-right:5px;">&nbsp;</a>
+                    <p id='push-msg' style='text-align:justify;font-weight:400;padding:0px 10px;line-height:17px;font-size:14px;width:95%'>&nbsp;</p>
+                </div>
+            </div>
+            </div><!--header-->
+            <div data-role="content" class="product_detail_content">
+                <h3 id="product_full_name" class="edit_heading"></h3>
+                <div id="product_slider" class="product_slider"></div> 
+                <div id="price_review_row" class="price_review_row"></div>
+                <!-- <div id="product_description" class="product_description"></div> -->
+                <div id="product_action_row" class="product_action_row"></div>
+                <div id="product_detail_loader" style="display:table;width: 100%;height: 100%;margin-top:10%;"><div style="display: table-cell;vertical-align: middle;text-align: center;color: #D2CDCD;"><img src="media/images/default/loading.gif" /></div></div>
+            </div><!--content-->
+            <div data-role="panel" id="myPanel" data-display="push"  data-swipe-close="true"  >
+                <ul data-role="listview" id="left_navigation">
+                    <li id="mofluid_home"><a href="javascript:void(0);" onclick="redirectTopage('index.html');">Home</a></li>
+                </ul>
+            </div><!--panel-->
+        </div><!--page-->
+    </body>
+</html>

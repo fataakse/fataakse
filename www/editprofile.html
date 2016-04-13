@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height"/>
+        <meta name="msapplication-tap-highlight" content="no" />
+        <title>Mofluid</title>
+       <script type="text/javascript" src="js/mofluid.include-0.0.1.js"></script>
+       <script type="text/javascript" langauge="javascript">
+            function onLoad(){
+                checkLoginStatus();
+                verify_session();
+                $("#mofluid_home_a").html(locale.message.button["home"]); 
+                $("#mofluid_myaccount_a").html(locale.message.button["my_account"]);
+                $("#mofluid_editprofile_a").html(locale.message.button["edit_profile"]);
+                $("#mofluid_myorders_a").html(locale.message.button["my_orders"]);
+                $("#mofluid_signout_a").html(locale.message.button["sign_out"]);
+                $("#mofluid_signin_a").html(locale.message.button["sign_in"]);
+                $('#profile .ui-collapsible-heading-toggle.ui-btn').html(locale.message.text["edit_information"]);
+                $('#default_bill_address .ui-collapsible-heading-toggle.ui-btn').html(locale.message.text["change_account_password"]);
+                $('#personal_information').html(locale.message.text["personal_information"]);
+                $('#first_name').html(locale.message.text["first_name"]);
+                $('#last_name').html(locale.message.text["last_name"]);
+                $('#first_name_1').html(locale.message.text["first_name"]);
+                $('#last_name_1').html(locale.message.text["last_name"]);
+                $('#mobile').html(locale.message.text["contact_no"]);
+                $('#address_label').html(locale.message.text["address"]);
+                $('#city_txt').html(locale.message.text["city"]);
+                $('#country_label').html(locale.message.text["country"]);
+                $('#state_txt').html(locale.message.text["state"]);
+                $('#zip_code').html(locale.message.text["zipcode"]);
+                $('#first_name_2').html(locale.message.text["first_name"]);
+                $('#last_name_2').html(locale.message.text["last_name"]);
+                $('#mobile_2').html(locale.message.text["contact_no"]);
+                $('#address_label_2').html(locale.message.text["address"]);
+                $('#city_2').html(locale.message.text["city"]);
+                $('#country_label_2').html(locale.message.text["country"]);
+                $('#state_2').html(locale.message.text["state"]);
+                $('#zip_code_2').html(locale.message.text["zipcode"]);
+                $('#email_address').html(locale.message.text["email_address"]);
+                $('#select').html(locale.message.text["select"]);
+                $('#select_2').html(locale.message.text["select"]);
+                $('#select_3').html(locale.message.text["select"]);
+                $('#default_billing_address').html(locale.message.text["default"] + ' ' + locale.message.text["billing_address"]);
+                $('#default_shipping_address').html(locale.message.text["default"] + ' ' + locale.message.text["shipping_address"]);
+                $("#searchFilter").attr("placeholder",locale.message.text["search_by_name"]);
+                
+                $('#updatebtn').html('<input type="button" data-role="button" data-theme="b" value="'+ locale.message.button["edit_information"] +'" onclick="Editaddress();"/>');
+                $('#updatebtn').trigger("create");
+                
+                //$('#updatebtn .ui-btn').html(locale.message.text["edit_information"]);
+                $('#old_password_1').html(locale.message.text["old_password"]);
+                $('#new_password_1').html(locale.message.text["new_password"]);
+                $('#confirm_password_1').html(locale.message.text["confirm_password"]);
+                $("#old_password").attr("placeholder", locale.message.text["old_password"]);
+                $("#new_password").attr("placeholder", locale.message.text["new_password"]);
+                $("#conf_password").attr("placeholder", locale.message.text["confirm_password"]);
+                //$('#change_password_button .ui-btn').html(locale.message.button["change_account_password"]);
+                 $('#change_password_button').html('<input type="button" data-role="button" data-theme="b" value="'+ locale.message.button["edit_information"] +'"  id="changePasswordButton" onclick="updatePassword();"/>');
+                $('#change_password_button').trigger("create");
+                try {
+                    var MYSTORE = JSON.parse(localStorage[config.app.storage_key+"_store"]);
+                    document.title = MYSTORE["store"]["name"];
+                    $("#storelabel").html(MYSTORE["store"]["name"]);
+                } catch(err) {
+                    console.log(err.message);
+                }
+                var Session = JSON.parse(localStorage[config.app.storage_key+'_session']);
+                var customerid = Session["customer_id"];
+                $.getJSON(config.url.api+"?callback=?"+"&store="+config.store.default+"&service=mofluidappcountry",
+                          function (countryresponse){
+                          //---Fetch Store Details from Mofluid Magento Web Service
+                          $.getJSON(config.url.api+"?callback=?"+"&store="+config.store.default+"&service=myprofile&customerid="+customerid,
+                                    function (response) {
+                                    console.log(response);
+                                    $("#fname").val(response["CustomerInfo"]["firstname"]);
+                                    $("#lname").val(response["CustomerInfo"]["lastname"]);
+                                    $("#email").val(response["CustomerInfo"]["email"]);
+                                    if(response["BillingAddress"]==null||response["BillingAddress"]==""){
+                                        $("#country").val(countryresponse["mofluid_default_country"]["country_id"]);
+                                        $("#country").selectmenu('refresh',true);
+                                        $("#country").trigger('change');
+                                    }
+                                    else{
+                                    var blname=response["BillingAddress"]["lastname"];
+                                    if(blname== null)
+                                    blname="";
+                                    $("#name").val(response["BillingAddress"]["firstname"]);
+                                    $("#blname").val(blname);
+                                    $("#phone").val(response["BillingAddress"]["contactno"]);
+                                    $("#address").val(response["BillingAddress"]["street"]);
+                                    $("#city").val(response["BillingAddress"]["city"]);
+                                    $("#country").val(response["BillingAddress"]["countryid"]);
+                                    $("#country").selectmenu('refresh',true);
+                                    $("#country").trigger('change');
+                                    $("#pincode").val(response["BillingAddress"]["pincode"]);
+                                    $("#state").val(response["BillingAddress"]["region"]);
+                                    }
+                                    if(response["ShippingAddress"]==null||response["ShippingAddress"]==""){
+                                        $("#Scountry").val(countryresponse["mofluid_default_country"]["country_id"]);
+                                        $("#Scountry").selectmenu('refresh',true);
+                                        $("#Scountry").trigger('change');
+                                    }
+                                    else {
+                                    var slname=response["ShippingAddress"]["lastname"];
+                                    if(slname== null)
+                                    slname="";
+                                    $("#Sname").val(response["ShippingAddress"]["firstname"]);
+                                    $("#Slname").val(slname);
+                                    $("#Sphone").val(response["ShippingAddress"]["contactno"]);
+                                    $("#Saddress").val(response["ShippingAddress"]["street"]);
+                                    $("#Scity").val(response["ShippingAddress"]["city"]);
+                                    $("#Scountry").val(response["ShippingAddress"]["countryid"]);
+                                    $("#Scountry").selectmenu('refresh',true);
+                                    $("#Scountry").trigger('change');
+                                    $("#Spincode").val(response["ShippingAddress"]["pincode"]);
+                                    $("#Sstate").val(response["ShippingAddress"]["region"]);
+                                    }
+                                    });
+                          print_country(countryresponse);
+                          print_countryy(countryresponse);
+                          });
+                
+            }
+        
+        /*
+         *Function call to edit address
+         *@param
+         *@return
+         */
+        
+        function Editaddress(){
+            first_name = $("#fname").val();
+            last_name =  $("#lname").val();
+            email = $("#email").val();
+            if(first_name == "") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["firstname_blank"],function () {},config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["firstname_blank"]);
+                }
+                $("#fname").focus();
+            }
+            else if(!isValidName(first_name)) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["firstname_invalid"],function () {},config.app.name, locale.message.button["close"]);
+                }
+                else{
+                    alert(locale.message.alert["firstname_invalid"]);
+                }
+                $("#fname").focus();
+            }
+            else if(last_name == "") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["lastname_blank"],function () {},config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["lastname_blank"]);
+                }
+                $("#lname").focus();
+            }
+            else if(!isValidName(last_name)) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["lastname_invalid"],function () {},config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["lastname_invalid"]);
+                }
+                $("#lname").focus();
+            }
+            else if(email == "") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["empty_email"],function () {},config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["empty_email"]);
+                }
+                $("#email").focus();
+            }
+            else if(!checkEmail(email)) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["invalid_email"],function () {},config.app.name, locale.message.button["close"]);
+                }
+                else{
+                    alert(locale.message.alert["invalid_email"]);
+                }
+                $("#email").focus();
+            }
+            else if ($("#name").val() == "") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["firstname_blank"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["firstname_blank"]);
+                }
+                $("#name").focus();
+            }
+            
+            else if(!isValidName($("#name").val())) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["firstname_invalid"],function () {},config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["firstname_invalid"]);
+                }
+                $("#name").focus();
+            }
+            
+            else if ($("#blname").val() == "") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["lastname_blank"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["lastname_blank"]);
+                }
+                $("#blname").focus();
+            }
+            
+            else if(!isValidName($("#blname").val())) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["lastname_invalid"],function () {},config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["lastname_invalid"]);
+                }
+                $("#blname").focus();
+            }
+            
+            else if ($("#phone").val() == "") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["contact_no_blank"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["contact_no_blank"]);
+                }
+                $("#phone").focus();
+            }
+            else if (IsNumeric($("#phone").val()) == false) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["invalid_contact_message"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["invalid_contact_message"]);
+                }
+                $("#phone").focus();
+            }
+            else if ($("#address").val() == "") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["empty_address"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["empty_address"]);
+                }
+                $("#address").focus();
+            }
+            else if(!validateAddress($("#address").val())){
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["invalid_address"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else{
+                    alert(locale.message.alert["invalid_address"]);
+                }
+                $("#address").focus();
+            }
+            else if ($("#city").val() == "") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["empty_city_message"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else
+                {
+                    alert(locale.message.alert["empty_city_message"]);
+                }
+                $("#city").focus();
+            }
+            else if ($("#country").val() == "Select") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["empty_country_message"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["empty_country_message"]);
+                    
+                }
+                $("#country").focus();
+            }
+            else if ($("#state").val() == "" || $("#state").val()=="Select") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["empty_state_message"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["empty_state_message"]);
+                    
+                }
+                $("#state").focus();
+            }
+            else if ($("#pincode").val() == "") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["empty_zipcode_message"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["empty_zipcode_message"]);
+                }
+                $("#pincode").focus();
+            }
+            else if (isValidalphanumeric($("#pincode").val()) == false) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["invalid_zipcode_message"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["invalid_zipcode_message"]);
+                }
+                $("#pincode").focus();
+            }
+            else if ($("#Sname").val() == "" ) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["firstname_blank"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["firstname_blank"]);
+                }
+                $("#Sname").focus();
+            }
+            else if ($("#Slname").val() == "" ) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["lastname_blank"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["lastname_blank"]);
+                }
+                $("#Slname").focus();
+            }
+            else if ($("#Sphone").val() == "") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["contact_no_blank"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["contact_no_blank"]);
+                }
+                $("#Sphone").focus();
+            }
+            else if (IsNumeric($("#Sphone").val()) == false) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["invalid_contact_message"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["invalid_contact_message"]);
+                }
+                $("#Sphone").focus();
+            }
+            else if ($("#Saddress").val() == "" ) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["empty_address"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["empty_address"]);
+                }
+                $("#Saddress").focus();
+            }
+            
+            else if(!validateAddress($("#Saddress").val())){
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["invalid_city_message"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else{
+                    alert(locale.message.alert["invalid_city_message"]);
+                }
+                $("#address").focus();
+            }
+            
+            else if ($("#Scity").val() == "" ) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["empty_city_message"],function () {
+                                                 },config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["empty_city_message"]);
+                }
+                $("#Scity").focus();
+            }
+            else if ($("#Scountry").val() == "Select") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["empty_country_message"],function () {
+                                                 
+                                                 }, config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["empty_country_message"]);
+                }
+                $("#Scountry").focus();
+            }
+            else if ($("#Sstate").val() == "") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["empty_state_message"],function () {
+                                                 }, config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["empty_state_message"]);
+                }
+                $("#Sstate").focus();
+            }
+            else if ($("#Spincode").val() == "") {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["empty_zipcode_message"],function () {
+                                                 }, config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["empty_zipcode_message"]);
+                }
+                $("#Spincode").focus();
+            }
+            else if (isValidalphanumeric($("#Spincode").val()) == false) {
+                if (config.app.platform=='ios' || config.app.platform=='android'){
+                    navigator.notification.alert(locale.message.alert["invalid_zipcode_message"],function () {},config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["invalid_zipcode_message"]);
+                }
+                $("#Spincode").focus();
+            }
+            else{
+                $("#updatebtn").html('<center><img src="media/images/default/loading.gif"></center>');
+                var firstpname = $("#fname").val();
+                var lastpname = $("#lname").val();
+                var pemail = $("#email").val();
+                var name = $("#name").val();
+                var firstname = $("#name").val();
+                var lastname = $("#blname").val();
+                var phone = $("#phone").val();
+                var address = $("#address").val();
+                var city  = $("#city").val();
+                var state = $("#state").val();
+                var country = $("#country").val();
+                var pincode = $("#pincode").val();
+                var recfname = $("#Sname").val();
+                var reclname = $("#Slname").val();
+                var recipientMobile = $("#Sphone").val();
+                var shippingAddress = $("#Saddress").val();
+                var shippingCity = $("#Scity").val();
+                var shippingCountry = $("#Scountry").val();
+                var shippingState = $("#Sstate").val();
+                var shippingPincode = $("#Spincode").val();
+                var pswd = generatePassword();
+                var Session = JSON.parse(localStorage[config.app.storage_key+'_session']);
+                var customerid = Session["customer_id"];
+                var profile = new Object();
+                profile['fname']=firstpname;
+                profile['lname']=lastpname;
+                profile['email']=pemail;
+                var billaddress = new Object();
+                billaddress['billfname']=firstname;
+                billaddress['billlname']=lastname;
+                billaddress['billstreet1']=address;
+                billaddress['billstreet2']='';
+                billaddress['billcity']=city;
+                billaddress['billpostcode']=pincode;
+                billaddress['billstate']=state;
+                billaddress['billcountry']=country;
+                billaddress['billphone']=phone;
+                var shippaddress = new Object();
+                shippaddress['shippfname'] = recfname;
+                shippaddress['shipplname'] = reclname;
+                shippaddress['shippstreet1'] = shippingAddress;
+                shippaddress['shippstreet2'] = "";
+                shippaddress['shippcity'] = shippingCity;
+                shippaddress['shippstate'] = shippingState;
+                shippaddress['shipppostcode'] = shippingPincode;
+                shippaddress['shippcountry'] = shippingCountry;
+                shippaddress['shippphone'] = recipientMobile;
+                var bill = JSON.stringify(billaddress);
+                var shipp = JSON.stringify(shippaddress);
+                var uprofile = JSON.stringify(profile);
+                $.getJSON(config.url.api+"?callback=?"+"&store="+config.store.default+"&service=setprofile&customerid="+customerid+"&billaddress="+bill+"&shippaddress="+shipp+"&profile="+uprofile,
+                          function (response) {
+                          if(response['userprofile']!=0){
+                          if (config.app.platform=='ios' || config.app.platform=='android') {
+                          navigator.notification.alert(locale.message.alert["profile_address_update"],function () {},config.app.name, locale.message.button["close"]);
+                          }
+                          else {
+                          alert(locale.message.alert["profile_address_update"]);
+                          }
+                          history.back();
+                          }
+                          else{
+                          if (config.app.platform=='ios' || config.app.platform=='android') {
+                          navigator.notification.alert(locale.message.alert["check_email"],function () {},config.app.name, locale.message.button["close"]);
+                          }
+                          else {
+                          alert(locale.message.alert["check_email"]);
+                          }
+                          $("#updatebtn").html(' <input type="button" data-role="button" data-theme="b" value="Update" onclick="Editaddress();"/>');
+                          $("#updatebtn").trigger("create");
+                          $("#email").focus();
+                          }
+                          });
+            }
+        }
+        
+        
+        function updatePassword(){
+        var Session = JSON.parse(localStorage[config.app.storage_key+'_session']);
+        var customerid = Session["customer_id"];
+        var email = Session["email"];
+        var old_password = $("#old_password").val();
+        var new_password = $("#new_password").val();
+        var conf_password = $("#conf_password").val();
+        //---Fetch Store Details from Mofluid Magento Web Service
+        if(old_password.length<6) {
+            if (config.app.platform=='ios' || config.app.platform=='android') {
+                navigator.notification.alert(locale.message.alert["password_validation_for_minimum_length"],function () {
+                                             },config.app.name, locale.message.button["close"]);
+            }
+            else {
+                alert(locale.message.alert["password_validation_for_minimum_length"]);
+            }
+            $("#old_password").focus();
+        }
+        else if(new_password.length<6){
+            if (config.app.platform=='ios' || config.app.platform=='android') {
+                navigator.notification.alert(locale.message.alert["password_validation_for_minimum_length"],function () {
+                                             },config.app.name, locale.message.button["close"]);
+            }
+            else {
+                alert(locale.message.alert["password_validation_for_minimum_length"]);
+            }
+            $("#new_password").focus();
+        }
+        else if(new_password != conf_password){
+            if (config.app.platform=='ios' || config.app.platform=='android') {
+                navigator.notification.alert(locale.message.alert["confirm_password_different"],function () {
+                                             },config.app.name, locale.message.button["close"]);
+            }
+            else {
+                alert(locale.message.alert["confirm_password_different"]);
+            }
+            $("#conf_password").focus();
+        }
+        else {
+            $("#change_password_button").html('<center><img src="media/images/default/loading.gif"></center>');
+            $.getJSON(config.url.api+"?callback=?"+"&store="+config.store.default+"&service=changeprofilepassword&customerid="+customerid+"&username="+email+"&oldpassword="+Base64.encode(old_password)+"&newpassword="+Base64.encode(new_password),
+                      function (response) {
+                      if(response) {
+                          if(response["change_status"] == 1 || response["change_status"] == "1") {
+                              if (config.app.platform=='ios' || config.app.platform=='android') {
+                                  navigator.notification.alert(locale.message.alert["change_password_success"],function () {},config.app.name, locale.message.button["close"]);
+                              }
+                              else {
+                                  alert(locale.message.alert["change_password_success"]);
+                              }
+                          }
+                          else {
+                              if(config.app.platform=='ios' || config.app.platform=='android') {
+                                  navigator.notification.alert(response["message"],function () {},config.app.name, locale.message.button["close"]);
+                              }
+                              else {
+                                  alert(response["message"]);
+                              }
+                          }
+                      }
+                      else {
+                      if (config.app.platform=='ios' || config.app.platform=='android') {
+                      navigator.notification.alert(locale.message.alert["server_not_responding"],function () {},config.app.name, locale.message.button["close"]);
+                      }
+                      else {
+                      alert(locale.message.alert["server_not_responding"]);
+                      }
+                      }
+                      history.back();
+                      });
+        }
+        
+        }
+        
+            </script>
+    </head>
+    <body onLoad="onLoad()">
+        <div data-role="page" id="mainpage" >
+            
+            <div data-role="header" data-position="fixed" data-tap-toggle="false">
+                <div id="mainheader" class="mainheader">
+            	<div class="navigation_button">
+                        <img class="" onclick="history.back();" src="media/images/icons/elegant/back_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/back_32x32.png'" />
+                </div>
+                
+                <div class="navigation_button">
+                    <a href="#myPanel">
+                        <img class="navigation_icon" src="media/images/icons/elegant/menu_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/menu_32x32.png'" />
+                    </a>
+                </div>
+                
+                <div class="navigation_search" align="center">
+                    <div class="searchbox">
+                       <form name="serachForm" action="javascript:custom_search();">
+                           <div>
+                               <input id="searchFilter" class="search-box" type="search" data-type="search" placeholder="" data-theme="a" />
+                               <ul id="suggestions" data-role="listview" data-inset="true" data-theme="a"></ul>
+                           </div>
+                       </form>
+                   </div>
+                </div>
+                
+                <div class="navigation_cart">
+                    <a href="javascript:void(0);" onclick="redirectTopage('cart.html')">
+                        <img  class="cart_icon" src="media/images/icons/elegant/cart_32x32.png" onerror="this.onerror=null;this.src='images/cart.png'" />
+                        <div class="cartamount">
+                            <div class="cartNew" id="cartProducts">0</div>
+                        </div>
+                    </a>
+                </div>
+            <div id="push-header" style="display:none">
+                   <a href="javascript:hidePush();" style="float: right;margin: 5px 5px 5px 5px;background-color: #e5e5e5;width: 25px;height: 25px;border-radius: 100%;padding: 5px;background-image: url(media/images/icons/elegant/cross_32x32.png);background-position: center;background-size: 80% 80%;margin-right:5px;">&nbsp;</a>
+                   <p id='push-msg' style='text-align:justify;font-weight:400;padding:0px 10px;line-height:17px;font-size:14px;width:95%'>&nbsp;</p>
+               </div>
+            </div>
+            </div>
+            
+            <div data-role="content">
+                
+                <div id="loginbox" class="loginbox" align="center">
+                    
+                    <div id="myprofile_content" class="myprofile" style="border:2px solid #e5e5e5;background-color:#ffffff;padding:7px">
+                        
+                        <div id="profile" data-role="collapsible" data-inset="false" data-collapsed-icon="arrow-rr" data-expanded-icon="arrow-dd" style="margin-bottom:10px" data-collapsed="false">
+                            <h3></h3>
+                            
+                            <div style="text-align:left">
+                                
+                                <h3 class="edit_heading" id="personal_information"></h3>
+                                <label for="fname" style="font-size:14px;" id="first_name"></label>
+                                <input id="fname" name="fname" type="text"/>
+                                <label for="lname" style="font-size:14px;" id="last_name"></label>
+                                <input name="lname" id="lname" type="text"/>
+                                <label for="email" style="font-size:14px;" id="email_address"></label>
+                                <input name="email" id="email" type="text" style=""/>
+                                <h3 class="edit_heading" id="default_billing_address"></h3>
+                                
+                                <label for="name" style="font-size:14px;" id="first_name_1"></label>
+                                <input id="name" name="firstname" type="text"/>
+                                <label for="blname" style="font-size:14px;" id="last_name_1"></label>
+                                <input id="blname" name="lastname" type="text"/>
+                                <label for="phone" style="font-size:14px;" id="mobile"></label>
+                                <input name="phone" id="phone" type="text"/>
+                                <label for="address" style="font-size:14px;" id="address_label"></label>
+                                <textarea name="address" id="address" id="address" cols=30 rows=4></textarea>
+                                <label for="city" style="font-size:14px;" id="city_txt"></label>
+                                <input id="city" name="city" type="text"/>
+                                <label for="country" style="font-size:14px;" id="country_label"></label>
+                                <select id="country" name ="country" onchange="printstate();">
+                                    <option value='' style="font-size:14px;" id="select"></option>
+                                </select>
+                                <label for="state" style="font-size:14px;" id="state_txt"></label>
+                                <div id="state_textfield" >
+                                    <input id="state" name="state" type="text"/>
+                                </div>
+                                <div id="state_dropdown" style="display:none;">
+                                    <select id="states" name ="state" onchange="savestate();">
+                                        <option value='' style="font-size:14px;" id="select"></option>
+                                    </select>
+                                </div>
+                                <label for="pincode" style="font-size:14px;" id="zip_code"></label>
+                                <input id="pincode" name="pincode" type="text"/>
+                                <h3 class="edit_heading" id="default_shipping_address"></h3> 
+                                <label for="Sname" style="font-size:14px;" id="first_name_2"></label>
+                                <input id="Sname" name="firstname" type="text"/>
+                                <label for="Slname" style="font-size:14px;" id="last_name_2"></label>
+                                <input id="Slname" name="lastname" type="text"/>
+                                <label for="Sphone" style="font-size:14px;" id="mobile_2"></label>
+                                <input name="Sphone" id="Sphone" type="text"/>
+                                <label for="Saddress" style="font-size:14px;" id="address_label_2"></label>
+                                <textarea name="Saddress" id="Saddress" id="address" cols=30 rows=4></textarea>
+                                <label for="Scity" style="font-size:14px;" id="city_2"></label>
+                                <input id="Scity" name="Scity" type="text"/>
+                                <label for="Scountry" style="font-size:14px;" id="country_label_2"></label>
+                                <select id="Scountry" name ="Scountry" onchange="printSstate();">
+                                    <!--option value='' style="font-size:14px;" id="select_2"></option-->
+                                </select>
+                                <label for="Sstate" style="font-size:14px;" id="state_2"></label>
+                                <div id="Sstate_textfield" >
+                                    <input id="Sstate" name="Sstate" type="text" />
+                                </div>
+                                <div id="Sstate_dropdown" style="display:none;">
+                                    <select id="Sstates" name ="state" onchange="saveSstate();">
+                                        <!--option value='' style="font-size:14px;" id="select_3"></option-->
+                                    </select>
+                                </div>
+                                <label for="Spincode" style="font-size:14px;" id="zip_code_2"></label>
+                                <input id="Spincode" name="Spincode" type="text"/>
+                                <div id="updatebtn" style="width:90%;margin:10px auto;" align="center">
+                                    <!--<input type="button" data-role="button" data-theme="c" value="Update" onclick="Editaddress();"/>-->
+                                </div>
+                            </div>
+                            
+                            
+                        </div>
+                        
+                        <div id="default_bill_address" data-role="collapsible" data-inset="false" data-collapsed-icon="arrow-rr" data-expanded-icon="arrow-dd" style="margin-bottom:10px">
+                            <h3></h3>
+                            
+                            <div id="change_password" align="left">
+                                
+                                <div id="old_password_field">
+                                     <label for="old_password" style="font-size:14px;" id="old_password_1"></label>
+                                    <input type="password" name="old_password" id="old_password" value="" placeholder="" />
+                                </div>
+                                <div id="new_password_field">
+                                     <label for="new_password" style="font-size:14px;" id="new_password_1"></label>
+                                    <input type="password" name="new_password" id="new_password" value="" placeholder="" />
+                                </div>
+                                <div id="conf_password_field">
+                                     <label for="conf_password" style="font-size:14px;" id="confirm_password_1"></label>
+                                    <input type="password" name="conf_password" id="conf_password" value="" placeholder="" />
+                                </div>
+                                
+                                <div id="change_password_button" style="width:90%;margin:10px auto;" align="center">
+                                    <!--<input type="button" data-role="button" data-theme="c" value="Change Password"  id="changePasswordButton" onclick="updatePassword();"/>-->
+                                </div>
+                                
+                            </div>
+                            
+                            
+                        </div>
+                        
+                        
+                    </div>
+                    
+                    
+                </div>
+                
+            </div>
+            
+             <div data-role="footer" style="display:none"></div>
+            
+            
+            <div data-role="panel" id="myPanel"  data-swipe-close="true"  >
+                <ul data-role="listview" id="left_navigation">
+                    <li id="mofluid_home"><a href="javascript:void(0);" onclick="redirectTopage('index.html');">Home</a></li>
+                </ul>
+                
+            </div>
+        </div>
+            <!--<div data-role="content">
+                
+                <div id="loginbox" class="loginbox" align="center">
+                    
+                    <div id="myprofile_content" class="myprofile" style="border:2px solid #e5e5e5;background-color:#ffffff;padding:7px">
+                        
+                        <div id="profile" data-role="collapsible" data-inset="false" data-collapsed-icon="arrow-rr" data-expanded-icon="arrow-dd" style="margin-bottom:10px" data-collapsed="false">
+                            <h3> Edit Information </h3>
+                            
+                            <div style="text-align:left">
+                                
+                                <h3 class="edit_heading"> Personal Information </h3>
+                                <label for="fname" style="font-size:14px;">First Name</label>
+                                <input id="fname" name="fname" type="text"/>
+                                <label for="lname" style="font-size:14px;">Last Name</label>
+                                <input name="lname" id="lname" type="text"/>
+                                <label for="email" style="font-size:14px;">Email Address</label>
+                                <input name="email" id="email" type="text" style=""/>
+                                <h3 class="edit_heading">Default Billing Address</h3>
+                                <label for="name" style="font-size:14px;">First Name</label>
+                                <input id="name" name="firstname" type="text"/>
+                                <label for="blname" style="font-size:14px;">Last Name</label>
+                                <input id="blname" name="lastname" type="text"/>
+                                <label for="phone" style="font-size:14px;">Mobile</label>
+                                <input name="phone" id="phone" type="text"/>
+                                <label for="address" style="font-size:14px;">Address</label>
+                                <textarea name="address" id="address" id="address" cols=30 rows=4></textarea>
+                                <label for="city" style="font-size:14px;">City</label>
+                                <input id="city" name="city" type="text"/>
+                                <label for="country" style="font-size:14px;">Country</label>
+                                <select id="country" name ="country" onchange="printstate();">
+                                    <option value='' style="font-size:14px;">Select</option>
+                                </select>
+                                <label for="state" style="font-size:14px;">State</label>
+                                <div id="state_textfield" >
+                                    <input id="state" name="state" type="text"/>
+                                </div>
+                                <div id="state_dropdown" style="display:none;">
+                                    <select id="states" name ="state" onchange="savestate();">
+                                        <option value='' style="font-size:14px;">Select</option>
+                                    </select>
+                                </div>
+                                <label for="pincode" style="font-size:14px;">Zip Code</label>
+                                <input id="pincode" name="pincode" type="text"/>
+                                <h3 class="edit_heading">Default Shipping Address</h3>
+                                <label for="Sname" style="font-size:14px;">First Name</label>
+                                <input id="Sname" name="firstname" type="text"/>
+                                <label for="Slname" style="font-size:14px;">Last Name</label>
+                                <input id="Slname" name="lastname" type="text"/>
+                                <label for="Sphone" style="font-size:14px;">Mobile</label>
+                                <input name="Sphone" id="Sphone" type="text"/>
+                                <label for="Saddress" style="font-size:14px;">Address</label>
+                                <textarea name="Saddress" id="Saddress" id="address" cols=30 rows=4></textarea>
+                                <label for="Scity" style="font-size:14px;">City</label>
+                                <input id="Scity" name="Scity" type="text"/>
+                                <label for="Scountry" style="font-size:14px;">Country</label>
+                                <select id="Scountry" name ="Scountry" onchange="printSstate();">
+                                    <option value='' style="font-size:14px;">Select</option>
+                                </select>
+                                <label for="Sstate" style="font-size:14px;">State</label>
+                                <div id="Sstate_textfield" >
+                                    <input id="Sstate" name="Sstate" type="text" />
+                                </div>
+                                <div id="Sstate_dropdown" style="display:none;">
+                                    <select id="Sstates" name ="state" onchange="saveSstate();">
+                                        <option value='' style="font-size:14px;">Select</option>
+                                    </select>
+                                </div>
+                                <label for="Spincode" style="font-size:14px;">Zip Code</label>
+                                <input id="Spincode" name="Spincode" type="text"/>
+                                <div id="updatebtn" style="width:90%;margin:10px auto;" align="center">
+                                    <input type="button" data-role="button" data-theme="b" value="Update" onclick="Editaddress();"/>
+                                </div>
+                            </div>
+                            
+                            
+                        </div>
+                        
+                        <div id="default_bill_address" data-role="collapsible" data-inset="false" data-collapsed-icon="arrow-rr" data-expanded-icon="arrow-dd" style="margin-bottom:10px">
+                            <h3>Change Account Password</h3>
+                            
+                            <div id="change_password" align="left">
+                                
+                                <div id="old_password_field">
+                                     <label for="old_password" style="font-size:14px;">Old Password</label>
+                                    <input type="password" name="old_password" id="old_password" value="" placeholder="Old Password" />
+                                </div>
+                                <div id="new_password_field">
+                                     <label for="new_password" style="font-size:14px;">New Password</label>
+                                    <input type="password" name="new_password" id="new_password" value="" placeholder="New Password" />
+                                </div>
+                                <div id="conf_password_field">
+                                     <label for="conf_password" style="font-size:14px;">Confirm Password</label>
+                                    <input type="password" name="conf_password" id="conf_password" value="" placeholder="Confirm Password" />
+                                </div>
+                                
+                                <div id="change_password_button" style="width:90%;margin:10px auto;" align="center">
+                                    <input type="button" data-role="button" data-theme="b" value="Change Password"  id="changePasswordButton" onclick="updatePassword();"/>
+                                </div>
+                                
+                            </div>
+                            
+                            
+                        </div>
+                        
+                        
+                    </div>
+                    
+                    
+                </div>
+                
+            </div>
+            
+             <div data-role="footer" style="display:none"></div>
+            
+            
+            <div data-role="panel" id="myPanel"  data-swipe-close="true"  >
+                <ul data-role="listview" id="left_navigation">
+                    <li id="mofluid_home"><a href="javascript:void(0);" onclick="redirectTopage('index.html');">Home</a></li>
+                </ul>
+                
+            </div>
+        </div>-->
+    </body>
+</html>

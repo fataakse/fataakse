@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height"/>
+        <meta name="msapplication-tap-highlight" content="no" />
+        <title>Mofluid</title>
+        <script type="text/javascript" src="js/mofluid.include-0.0.1.js"></script>
+        <script src="js/picker_date/picker.js"></script>
+        <script src="js/picker_date/picker.date.js"></script>
+        <link rel="stylesheet" href="css/picker_date/default.css">
+        <link rel="stylesheet" href="css/picker_date/default.date.css">
+        <script type="text/javascript">
+            var shipAmt = 0;
+            var coupon_status="";
+            var coupon_code="",action_type="";
+            var grandAmt=0,shipAmt=0, discount_amount=0;
+            var shipping_available = 0;
+            var ship_price = 0;
+            var pid, preview;
+            var quote = new Object();
+            var products = new Array();
+            var slots = [];
+            var delivery_date = '';
+            var lastHour = 24;
+            /*
+             *Function call on load page
+             *@param
+             *@return
+             */
+            function onLoad() {
+                checkLoginStatus();
+                verify_session();
+                var coupon_discount=0;
+                try {
+                    var MYSTORE = JSON.parse(localStorage[config.app.storage_key+"_store"]);
+                    document.title = MYSTORE["store"]["name"];
+                    $("#storelabel").html(MYSTORE["store"]["name"]);
+                }
+                catch (err) {
+                }
+                $("#searchFilter").attr("placeholder",locale.message.text["search_by_name"]);
+                var Session = JSON.parse(localStorage[config.app.storage_key+'_session']);
+                var address = localStorage[config.app.storage_key+"_address"]; 
+                var customerid = Session["customer_id"];
+                quote = Cart.getCartFromStorage();
+                var products = filterQuoteProducts(quote["products"]);
+                shipping_available = 0;
+                console.log(products);
+                var shipping_webservice = config.url.api + "?callback=?" + "&store=" + config.store.default + "&service=preparequote&currency="+Currency.getStoreCurrency()+"&products="+Base64.encode(JSON.stringify(products))+"&address="+address+"&is_create_quote=0&find_shipping=1&theme=elegant&customerid="+customerid;
+                console.error("Calling of webservice first time.");
+                console.log(shipping_webservice);
+                $(".ui-loader").show();
+                $.ajax({
+                    url: shipping_webservice,
+                    type: "get",
+                    dataType: "jsonp",
+                    beforeSend: function(){
+                       console.log("Before Shipping Webservice");
+                    },
+                    error: function(){
+                       if (config.app.platform == 'ios' || config.app.platform == 'android') {
+                            navigator.notification.alert(locale.message.alert["try_again"], function() {}, config.app.name, locale.message.button["close"]);
+                       }
+                       else {
+                            alert(locale.message.alert["try_again"])
+                       }
+                       $(".ui-loader").hide();
+                       console.log("Error  on Webservice");
+                    },
+                    complete: function(){
+                       console.log("Complete Webservice");
+                       $(".ui-loader").hide();
+                    },
+                    success: function( response ){
+                       console.log(response);
+                       slots = response.$results;
+                       if(typeof slots[slots.length-1]['interval'] != 'undefined')
+                        lastHour = parseInt(slots[slots.length-1]['interval'].split('-')[0]);
+                       createCal();
+                       shipping_available = 1;
+                       var available_shipping_method = Base64.decode(response.available_shipping_method);
+                       if(available_shipping_method == ""){
+                            $("#shipping_error").html(locale.message.text.no_shipping_methods_message);
+                            $("#shipping_error").show();
+                            $("#ship_method").hide();
+                       }
+                       else{
+                            $("#shipping_error").hide();
+                            $("#shipping_method").append(available_shipping_method);
+                            $("#shipping_method").trigger("create");
+                            $("#shipping_method").val("create");
+                            $("#shipping_method").val($("#shipping_method option:eq(1)").val());
+                            $("#shipping_method").selectmenu('refresh');
+                            shipping_detail();
+                       }
+                       console.log("Success Webservice");
+                    }
+                });
+                var address_html = CartLayout.getAddressHtml();
+                $("#address_container").html(address_html);
+                $("#address_container").trigger('create');
+                $( "#quote_cart_address" ).trigger("create");
+                var cart_html = CartLayout.getCartHtml("disable_controls");
+                $("#cartlist_container").html(cart_html);
+                $("#cartlist_container").trigger('create');
+                Locale.loadCheckoutText();
+            }
+            
+            /*
+             *Function call to get shipping detail
+             *@param
+             *@return
+             */
+            function shipping_detail(){
+                console.log("changed");
+                if($('#shipping_method').val()=="Select" || $('#shipping_method').val()=="noshipping"){
+                    return false;
+                }
+                else {
+                }
+                var shipping_method_code = $('#shipping_method').val();
+                var shipping_method_text = $('#shipping_method').val().split('+');
+                var address = localStorage[config.app.storage_key+"_address"];
+                console.log(shipping_method_code);
+                coupon_code = $("#coupon_code").val();
+                var products = filterQuoteProducts(quote["products"]);
+                var Session = JSON.parse(localStorage[config.app.storage_key+'_session']);
+                var customerid = Session["customer_id"];
+                var prepare_quote_url = config.url.api+'?callback=?'+'&store='+config.store.default+'&service=preparequote&products='+Base64.encode(JSON.stringify(products))+'&address='+address+'&couponCode='+coupon_code+'&currency='+Currency.getStoreCurrency()+'&customerid='+customerid+'&is_create_quote=0&shipmethod='+$('#shipping_method').val();
+                console.error("Quote Prepare URL");
+                console.log(prepare_quote_url);
+                $(".ui-loader").show();
+                $.ajax({
+                       url: prepare_quote_url,
+                       type: "get",
+                       dataType: "jsonp",
+                       beforeSend: function(){
+                            console.log("Before Shipping Webservice");
+                       },
+                       error: function(){
+                            $(".ui-loader").hide();
+                            if (config.app.platform == 'ios' || config.app.platform == 'android') {
+                                navigator.notification.alert(locale.message.alert["try_again"], function() {}, config.app.name, locale.message.button["close"]);
+                            }
+                            else {
+                                alert(locale.message.alert["try_again"])
+                            }
+                            console.log("Error  on Webservice");
+                       },
+                       complete: function(){
+                            $(".ui-loader").hide();
+                            console.log("Complete Webservice");
+                       },
+                       success: function( response ){
+                            console.log(response);
+                            var cart = new Object();
+                            status = response.status;
+                            if(status == "success") {
+                                coupon_discount = parseFloat(response.coupon_discount).toFixed(2);
+                                coupon_status = response.coupon_status;
+                                cart["tax_amount"]= parseFloat(response.tax_amount).toFixed(2);
+                                cart["total_amount"]= parseFloat(response.total_amount).toFixed(2);
+                                cart["shipping_amount"] = parseFloat(response.shipping_amount).toFixed(2);
+                     
+                                var coupon ={};
+                                coupon.applied = 0;
+                                coupon.code = "";
+                                coupon.amount = 0;
+                                if(coupon_status == 1 && coupon_code) {
+                                    $("#coupon_status_msg").html(locale.message.alert["coupon_applied"].replace("{{coupon}}", coupon_code));
+                                    $("#coupon_status_msg").show();
+                                    coupon.applied = 1;
+                                    coupon.code = coupon_code;
+                                    coupon.amount = Math.abs(coupon_discount);
+                                    $("#cancelcoupon").show();
+                                }
+                                else if(coupon_code && coupon_status != 1){
+                                    $("#coupon_status_msg").html(locale.message.alert["coupon_failed"].replace("{{coupon}}", coupon_code));
+                                    $("#coupon_status_msg").show();
+                       
+                                    $("#cancelcoupon").hide();
+                                    $("#coupon_code").val("");
+                                }
+                                else{
+                                    $("#coupon_status_msg").hide();
+                       
+                                    $("#cancelcoupon").hide();
+                                    $("#coupon_code").val("");
+                                }
+                     
+                                cart["coupon"] = coupon;
+                                var cart_info_html = CartLayout.getQuoteAttributesHtml(cart, shipping_method_text[0]);
+                                console.log("Success Webservice");
+                            }
+                            var CompleteCart = JSON.parse(Base64.decode(localStorage[config.app.storage_key+"_cart"]));
+                            CompleteCart["cart"] = new Object();
+                            CompleteCart["cart"] = cart;
+                            localStorage[config.app.storage_key+"_cart"] = Base64.encode(JSON.stringify(CompleteCart));
+                            console.log(JSON.parse(Base64.decode(localStorage[config.app.storage_key+"_cart"])));
+                            $("#quote_container").html(cart_info_html);
+                            enableProceed();
+                    }
+              });
+           }
+            /*
+             *Function call to review order
+             *@param
+             *@return
+             */
+            function review_order(){
+                if(shipping_available) {
+                    if($('#shipping_method').val()=="Select"){
+                        if (config.app.platform=='ios' || config.app.platform=='android'){
+                            navigator.notification.alert(locale.message.alert["shipping_mode"],function () {
+                                                         },config.app.name, locale.message.button["close"]);
+                        }
+                        else {
+                            alert(locale.message.alert["shipping_mode"]);
+                        }
+                    }
+                    else if($('#delivery_time_slot').val() == '' || delivery_date == '') {
+                        if (config.app.platform=='ios' || config.app.platform=='android'){
+                            navigator.notification.alert(locale.message.alert["delivery_slot"],function () {
+                                                         },config.app.name, locale.message.button["close"]);
+                        }
+                        else {
+                            alert(locale.message.alert["delivery_slot"]);
+                        }
+                    }
+                    else{
+                        var CompleteCart = JSON.parse(Base64.decode(localStorage[config.app.storage_key+"_cart"]));
+                        localStorage[config.app.storage_key+"_slot"] = Base64.encode(JSON.stringify({'date':delivery_date,'time':$('#delivery_time_slot').val()}));
+                        CompleteCart["shippingmethod"] = $('#shipping_method').val();
+                        localStorage[config.app.storage_key+"_cart"] = Base64.encode(JSON.stringify(CompleteCart));
+                        redirectTopage("paymentmethod.html");
+                    }
+                }
+                else {
+                    if (config.app.platform=='ios' || config.app.platform=='android'){
+                        navigator.notification.alert(locale.message.text["no_shipping_methods_message"],function () {
+                                                     },config.app.name, locale.message.button["close"]);
+                    }
+                    else {
+                        alert(locale.message.text["no_shipping_methods_message"]);
+                    }
+                }
+            }
+            
+            function couponApply() {
+                $("#coupon_status_msg").val('');
+                var couponcode = $("#coupon_code").val();
+                if (couponcode == "") {
+                    if (config.app.platform=='ios' || config.app.platform=='android') {
+                        navigator.notification.alert(locale.message.text["coupon_code_text"], 
+                            function () {
+                            }, 
+                            config.app.name, 
+                            locale.message.button["close"]
+                        );
+                    }
+                    else {
+                        alert(locale.message.text["coupon_code_text"]);
+                    }
+                    $("#coupon_code").focus();
+                }
+                else {
+                    if($('#shipping_method').val()=="Select"){
+                        if (config.app.platform=='ios' || config.app.platform=='android') {
+                            navigator.notification.alert(locale.message.alert["shipping_mode"], 
+                                function () {
+                                }, 
+                                config.app.name, 
+                                locale.message.button["close"]
+                            );
+                        }
+                        else {
+                            alert(locale.message.alert["shipping_mode"]);
+                        }
+                    }
+                    else {
+                        shipping_detail();
+                    }
+                }
+            }
+            /*
+             *Function convert array to object
+             *@param name and values
+             *@return result
+             */
+            
+            function toObject(names, values) {
+                var result = {};
+                for (var i = 0; i < names.length; i++)
+                result[names[i]] = values[i];
+                return result;
+            }
+        
+            function cancelCoupon(){
+                if (config.app.platform == 'ios' || config.app.platform == 'android') {
+                    navigator.notification.alert(locale.message.alert["coupon_canceled"].replace("{{coupon}}", coupon_code), function() {    location.reload(true);
+                                                 }, config.app.name, locale.message.button["close"]);
+                }
+                else {
+                    alert(locale.message.alert["coupon_canceled"].replace("{{coupon}}", coupon_code));
+                    location.reload(true);
+                }
+            }
+            function createCal(){
+                 $('#delivery_date').val('');
+                 var weekDays = ['sun','mon','tue','wed','thu','fri','sat'];
+                 var date = new Date();
+                 var now = new Date();
+                 if(now.getHours() >= lastHour ) {
+                    var min = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                 } else {
+                    var min = now;
+                 }
+                 if (now.getMonth() == 11) {
+                    var next = new Date(now.getFullYear() + 1, 0, 1);
+                 } else {
+                    var next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                 }
+                 
+                 var $input = $( '.datepicker' ).pickadate({
+                    formatSubmit: 'yyyy/mm/dd',
+                    // container: '#container',
+                    // editable: true,
+                    closeOnSelect: false,
+                    closeOnClear: false,
+                    min: min,
+                    max: next,
+                    close: 'Select',
+                    klass:{
+                        highlighted: '',
+                    },
+                    onSet: function(context){
+                        console.log(context);
+                        if(typeof context.select != 'undefined'){
+                            delivery_date = context.select;
+                            var day = new Date(context.select).getDay();
+                            var timeSlots = [];
+                            var optionHtml = '<option value="">Select Delivery Time</option>';
+                            for(i in slots){
+                                if(slots[i][weekDays[day]] && isFutureSlot(slots[i]['interval'])){
+                                    optionHtml += '<option value="'+slots[i]['dtime']+'">'+slots[i]['dtime']+'</option>';
+                                }
+                            }
+                            console.log(optionHtml);
+                        } else {
+                            delivery_date='';
+                            var optionHtml = '<option value="">Select Deliver Time</option>';
+                        }
+                        $('#delivery_time_slot').html(optionHtml);
+                        $('#delivery_time_slot').val('');
+                        $("#delivery_time_slot").selectmenu("refresh", true);
+                    }
+
+                })
+
+                var picker = $input.pickadate('picker')
+                
+            }
+
+            function isFutureSlot(interval) {
+                if(delivery_date > new Date().getTime())
+                    return true;
+                var splitted = interval.split('-');
+                if(splitted.length != 2)
+                    return false;
+                return parseInt(splitted[0]) > new Date().getHours();
+            }
+            function enableProceed(){
+                if($('#shipping_method').val()=="Select" || $('#shipping_method').val()=="noshipping" || $('#delivery_time_slot').val()=="" ){
+
+                } else {
+                    $('#buyNow2').button('enable');
+                    $('#buyNow2').button('refresh');    
+                }
+            }
+            
+        </script>
+    </head>
+    <body onLoad="onLoad()">
+        <div data-role="page" id="mainpage" >
+            <div data-role="header" data-position="fixed" data-tap-toggle="false">
+            <div id="mainheader" class="mainheader">
+                <div class="navigation_button">
+                    <img class="" onclick="history.back();" src="media/images/icons/elegant/back_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/back_32x32.png'" />
+                </div>
+                <div class="navigation_button">
+                    <a href="#myPanel">
+                        <img class="navigation_icon" src="media/images/icons/elegant/menu_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/menu_32x32.png'" />
+                    </a>
+                </div>
+                <div class="navigation_search" align="center">
+                    <div class="searchbox">
+                       <form name="serachForm" action="javascript:custom_search();">
+                           <div>
+                               <input id="searchFilter" class="search-box" type="search" data-type="search" placeholder="" data-theme="a" />
+                               <ul id="suggestions" data-role="listview" data-inset="true" data-theme="a"></ul>
+                           </div>
+                       </form>
+                   </div>
+                </div>
+                <div class="navigation_cart">
+                    <a href="javascript:void(0);" onclick="redirectTopage('cart.html')">
+                        <img  class="cart_icon" src="media/images/icons/elegant/cart_32x32.png" onerror="this.onerror=null;this.src='images/cart.png'" />
+                        <div class="cartamount">
+                            <div class="cartNew" id="cartProducts">0</div>
+                        </div>
+                    </a>
+                </div>
+                <div id="push-header" style="display:none">
+                    <a href="javascript:hidePush();" style="float: right;margin: 5px 5px 5px 5px;background-color: #e5e5e5;width: 25px;height: 25px;border-radius: 100%;padding: 5px;background-image: url(media/images/icons/elegant/cross_32x32.png);background-position: center;background-size: 80% 80%;margin-right:5px;">&nbsp;</a>
+                    <p id='push-msg' style='text-align:justify;font-weight:400;padding:0px 10px;line-height:17px;font-size:14px;width:95%'>&nbsp;</p>
+                </div>
+            </div>
+            </div>
+
+            <div data-role="content">
+                <div id="loginbox" class="shipping_box" align="center">
+                    <div id="shipping_container" class="shipping_container">
+                        <h3 class="edit_heading" id="edit_heading"></h3>
+                        <div id="ship_method">
+                            <select  id="shipping_method" name ="shipping_method" onchange="shipping_detail();">
+                                <option value='Select' style="font-size:14px;" id="ship_select"></option>
+                            </select>
+                        </div>
+                        <div id="shipping_error" style="color:#cc0000;border:2px solid #cc0000;padding:10px;margin:10px 0px;display:none;">
+                            
+                        </div>
+                    </div>
+            
+                    <div id="address_container" class="address_container"></div>
+                    <div id="cartlist_container" class="cartlist_container"></div>
+                    <div id="quote_container" class="quote_container"></div>
+                    <div id="delivery_slot">
+                        <h2>Delivery Slots</h2>
+                        <input type="text" id="delivery_date" class="datepicker ui-btn ui-shadow ui-corner-all" name="date" placeholder="Select Delivery Date">
+                        <select id="delivery_time_slot" onchange="enableProceed()">
+                            <option value="">Select Delivery Time</option>
+                        </select>
+                    </div>
+                    <div id="couponcode" class="couponcode" style="padding:10px;overflow:hidden;text-align:left">
+                        <h3 class="edit_heading" id="discount_codes"> </h3>
+                        <p id="coupon_code_text"></p>
+                        <div>
+                            <input type="text" name="coupon_code" id="coupon_code" />
+                        </div>
+                        <p id="coupon_status_msg"></p>
+                        <div style="width:100%;overflow:hidden;">
+                            <div style="float:left;width:45%;margin-right:3%;overflow:hidden;" id="applybutton">
+                            </div>
+                            <div style="float:left;width:45%;margin-right:3%;overflow:hidden;display:none" id="cancelcoupon">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="cartbtn2" class="ship_method_btn">
+                    </div>
+                </div>
+            </div>
+            <div data-role="footer" style="display:none"></div>
+            <div data-role="panel" id="myPanel"   data-swipe-close="true"  >
+                <ul data-role="listview" id="left_navigation">
+                    <li id="mofluid_home"><a href="javascript:void(0);" onclick="redirectTopage('index.html');">Home</a></li>
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

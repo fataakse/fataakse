@@ -1,0 +1,93 @@
+<?xml version='1.0' encoding='utf-8'?>
+    <widget xmlns:gap="http://phonegap.com/ns/1.0" 
+    xmlns="http://www.w3.org/ns/widgets" 
+    id="com.mobileapp.fataakse" 
+    version="1.2.0">
+
+        <name>fataakse</name>
+        <description>
+            
+        </description>
+        <author email="rohit.kumar.ebiz1@ebizontek.com"
+        href="http://cordova.io">
+            Mofluid Team
+        </author>
+     <gap:plugin name="com.paypal.cordova.mobilesdk" />
+    	<gap:plugin name="org.apache.cordova.console" />
+    	<gap:plugin name="org.apache.cordova.device" />
+    	<gap:plugin name="org.apache.cordova.dialogs" />
+    	<gap:plugin name="org.apache.cordova.vibration" />
+    	<gap:plugin name="org.apache.cordova.network-information" />
+    	<gap:plugin name="org.apache.cordova.inappbrowser" />
+    	<gap:plugin name="org.apache.cordova.splashscreen" />
+    	<gap:plugin name="org.apache.cordova.battery-status" />
+    	<gap:plugin name="com.phonegap.plugins.pushplugin" /> 
+    	<gap:plugin name="org.apache.cordova.file" />
+    	<gap:plugin name="org.apache.cordova.file-transfer" />
+    	<gap:plugin name="com.inazar.datepicker"/>
+    	<gap:plugin name="com.phonegap.plugins.barcodescanner" />
+    	<gap:plugin name="org.apache.cordova.statusbar" />
+    	<gap:plugin name="nl.x-services.plugins.socialsharing" version="4.3.0" />
+        <gap:plugin name="com.millerjames01.sqlite-plugin" version="1.0.1" />
+        <gap:plugin name="com.danielcwilson.plugins.googleanalytics" version="0.6.1" />    
+        <gap:plugin name="com.teamnemitoff.phonedialer" version="0.3.0" />
+        <gap:plugin name="de.appplant.cordova.plugin.email-composer" version="0.8.1" />
+    	<!--Icons and Splash Screens Configuration for Mofluid Apps-->
+		
+		<!-- ===================== -->
+		<!-- Global Configuration  -->
+		<!-- ===================== -->
+		<!-- Icons -->
+		<icon src="resource/icon/96-96_2.png" />
+		<!-- Splash Screens -->
+		<gap:splash src="resource/splash/splash-screen_1.jpg" />
+		
+		<!-- ====================== -->
+		<!-- iOS Configuration      -->
+		<!-- ====================== -->
+		<!-- Icons -->
+		
+		
+		
+		<icon src="resource/icon/96-96_2.png" gap:platform="android" width="96" height="96" />
+		<icon src="resource/icon/72-72_1.png" gap:platform="android" width="72" height="72" />
+		<icon src="resource/icon/48-48_1.png" gap:platform="android" width="48" height="48" />
+		<icon src="resource/icon/36-36_1.png" gap:platform="android" width="36" height="36" />
+		<icon src="resource/icon/96-96_3.png" gap:platform="android" width="96" height="96" />
+		
+		<!--
+		<icon src="{{android-icon-small-2x}}" gap:platform="android" width="58" height="58" />
+		<icon src="{{android-icon-40-2x}}" gap:platform="android" width="80" height="80" />
+		<icon src="{{android-icon-50-2x}}" gap:platform="android" width="100" height="100" />
+		<icon src="{{android-icon-57-2x}}" gap:platform="android" width="114" height="114" />
+		<icon src="{{android-icon-60-2x}}" gap:platform="android" width="120" height="120" />
+		<icon src="{{android-icon-72-2x}}" gap:platform="android" width="144" height="144" />
+		<icon src="{{android-icon-76-2x}}" gap:platform="android" width="152" height="152" />
+		-->
+		<!-- Splash Screens -->
+		<gap:splash src="resource/splash/splash-screen_1.jpg" gap:platform="android" width="480" height="800" />
+		<gap:splash src="resource/splash/drawable_port_ldpi.png" gap:platform="android" width="200" height="320" />
+		<gap:splash src="resource/splash/drawable_port_mdpi.png" gap:platform="android" width="320" height="480" />
+		<gap:splash src="resource/splash/drawable_port_xhdpi.png" gap:platform="android" width="720" height="1280" />
+		<gap:splash src="resource/splash/drawable_land_hdpi.png" gap:platform="android" width="800" height="480" />
+		<gap:splash src="resource/splash/drawable_land_ldpi.png" gap:platform="android" width="320" height="200" />
+		<gap:splash src="resource/splash/drawable_land_mdpi.png" gap:platform="android" width="480" height="320" />
+		<gap:splash src="resource/splash/drawable_land_xhdpi.png" gap:platform="android" width="1280" height="720" />
+		
+    
+	       		 <preference name="phonegap-version" value="3.6.3" />
+                <preference name="orientation" value="portrait" />
+                <preference name="target-device" value="universal" />
+                <preference name="DisallowOverscroll" value="true" />
+          		<preference name="webviewbounce" value="false" />
+          		<preference name="FadeSplashScreenDuration" value="0.25" /> 
+          		<preference name="fullscreen" value="true" />
+          		<preference name="UIViewControllerBasedStatusBarAppearance" value="true" />
+          		<preference name="UIStatusBarHidden" value="true" />
+
+
+        
+
+ <content src="index.html" />
+    	<access origin="*" />
+	</widget>

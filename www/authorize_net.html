@@ -1,0 +1,122 @@
+<!--
+ /****************************************************************************
+ -----------------------------------------------------------------------------
+ *  File            :     pay.html
+ *  Application     :     Mofluid App for your Magento Site
+ *  Description     :     Redirect to payment gateway
+ *  Organization    :     Mofluid
+ *  Org URL         :     http://www.mofluid.com
+ -----------------------------------------------------------------------------
+ Copyright 2013: Ebizon Netinfo Pvt. Ltd. All rights reserved
+ -----------------------------------------------------------------------------
+ *****************************************************************************/
+ -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=1"/>
+        <title></title>
+        <!-- All Js(js/) and Css(css/) are included here  -->
+        <script type="text/javascript" src="js/mofluid.include-0.0.1.js"></script>
+        <script src="lib/crypto.js/crypto.js-3.1.2.js"></script>
+        <script type="text/javascript">
+         function onLoad(){
+           document.getElementById("heading").innerHTML = "<h2>" +  locale.message.text["authorizenet_redirect_message"] +  "</h2>";
+           document.getElementById("redirected").innerHTML = "" + locale.message.text["authorizenet_auto_redirect_message"] + "";
+           document.getElementById("authorize_clickhere").innerHTML = '<input type="button" value="'+ locale.message.button["click_here"]+'" style="width:100px" onclick="javascript:submit_form();">';
+	      try {
+                var data=queryValue();
+                data= Base64.decode(data);
+                data = removeUnrequiredChar(data);
+                data= JSON.parse(data);
+                console.log("Ready0");
+                
+                try {
+                    var url="https://test.authorize.net/gateway/transact.dll";
+                    if(data.mode == 1) {
+                        url="https://secure.authorize.net/gateway/transact.dll";
+                    }
+                }
+                catch(err) {
+                    //alert('New Erro : '+err.message);
+                }
+                //  alert("Ready1");
+                var loginID= data.loginID; //getPaymentInfo("authorizenet","payment_method_account_id");
+                var transactionKey= data.transactionKey; //getPaymentInfo("authorizenet","payment_method_account_key");
+                var email = data.email;//Session["email"];
+                var amount = data.total_amount;
+                var invoice=data.invoice;
+                var timeStamp= Math.round(new Date().getTime() / 1000) ;
+                var sequence="728";
+                 var currency_code = data.currency_code;
+                if(currency_code == "" || currency_code == null) {
+                    currency_code = 'USD';
+                }
+                // alert(loginID+" "+transactionKey+" "+email+" "+invoice);
+                try {
+                    var fingerprint = CryptoJS.HmacMD5(loginID + "^" + sequence + "^" + timeStamp + "^" + amount + "^"+currency_code, transactionKey);
+                }
+                catch(err) {
+                    //alert(err.message);
+                }
+                 var first_name=data.pay_bill.firstname;
+                var last_name=data.pay_bill.lastname;
+                var address=data.pay_bill.street;
+                var city=data.pay_bill.city;
+                var state=data.pay_bill.region;
+                var country=data.pay_bill.country;
+                var phone=data.pay_bill.phone;
+                var zipcode=data.pay_bill.postcode;
+                var cust_id=data.cust_id;
+                var shipamt ="Shipping Charge<|> <|>"+data.product_shipamt;
+                var rec_first_name=data.pay_shipp.firstname;
+                var rec_last_name=data.pay_shipp.lastname;
+                var ship_address=data.pay_shipp.street;
+                var ship_city=data.pay_shipp.city;
+                var ship_state=data.pay_shipp.region;
+                var ship_country=data.pay_shipp.country;
+                var ship_zipcode=data.pay_shipp.postcode;
+               
+                var authorize_return_url = data.authorize_return_url+"?service=authorizepaymentresponse&store=1&mofluid_order_id="+invoice;
+                var div_data = "<form method='post' action='"+url+"' name='paypal_form'><input type='hidden' name='x_login' value='"+loginID+"' /><input type='hidden' name='x_currency_code' value='"+currency_code+"' /><input type='hidden' name='x_amount' value='"+amount+"' /><input type='hidden' name='x_description' value='Payment Using Authorize .Net' /><input type='hidden' name='x_invoice_num' value='"+invoice+"' /><input type='hidden' name='x_fp_sequence' value='"+sequence+"' /><input type='hidden' name='x_fp_timestamp' value='"+timeStamp+"' /><input type='hidden' name='x_fp_hash' value='"+fingerprint+"' /><input type='hidden' name='x_test_request' value='false' /><input type='hidden' name='x_first_name' value='"+first_name+"' /><input type='hidden' name='x_last_name' value='"+last_name+"' /><input type='hidden' name='x_company' value='' /><input type='hidden' name='x_address' value='"+address+"' /><input type='hidden' name='x_city' value='"+city+"' /><input type='hidden' name='x_state' value='"+state+"' /><input type='hidden' name='x_country' value='"+country+"' /><input type='hidden' name='x_phone' value='"+phone+"' /><input type='hidden' name='x_zip' value='"+zipcode+"' /><input type='hidden' name='x_email' value='"+email+"' /><input type='hidden' name='x_cust_id' value='"+cust_id+"' /><input type='hidden' name='x_ship_to_first_name' value='"+rec_first_name+"' /><input type='hidden' name='x_ship_to_last_name' value='"+rec_last_name+"' /><input type='hidden' name='x_ship_to_company' value='' /><input type='hidden' name='x_ship_to_address' value='"+ship_address+"' /><input type='hidden' name='x_ship_to_city' value='"+ship_city+"' /><input type='hidden' name='x_ship_to_state' value='"+ship_state+"' /><input type='hidden' name='x_ship_to_country' value='"+ship_country+"' /><input type='hidden' name='x_ship_to_zip' value='"+ship_zipcode+"' /><input type='hidden' name='x_tax' value='"+shipamt+"' />\
+                <input type='hidden' name='x_receipt_link_method' value='POST'><input type='hidden' name='x_receipt_link_text' value='Return to Merchant Website'><input type='hidden' name='x_receipt_link_url' value='"+authorize_return_url+"'><input type='hidden' name='x_show_form' value='PAYMENT_FORM' /></form>";
+                document.getElementById('form_div').innerHTML= div_data;
+                
+            }
+            catch(err) {
+                console.log('Error : '+err.message);
+            }
+            document.forms['paypal_form'].submit();
+        }
+        
+        function submit_form(){
+            document.forms["paypal_form"].submit();
+        }
+        /*
+         *Function to get parameter from url
+         *@param: none
+         *@return: Data attach with url
+         */
+        function queryValue() {
+            var qrStr = window.location.search;
+            if (qrStr)
+            var qrvalue = (qrStr.split("?")[1].split("=")[1]);
+            return decodeURIComponent(qrvalue);
+        }
+        
+        
+        
+            </script>
+    </head>
+    <body onload="onLoad()">
+        <div data-role="page" id="mainPage">
+            <center><div id="heading"></div></center>
+            <center><img src="media/images/default/loading.gif"/></center>
+            <div id="form_div"></div>
+            <center><br/><br/><span id="redirected"></span><br/><br/>
+            <div id="authorize_clickhere"></div>
+                    </center>
+        </div>
+    </body>
+</html>

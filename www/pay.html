@@ -1,0 +1,236 @@
+<!--
+ /****************************************************************************
+ -----------------------------------------------------------------------------
+ *  File            :     pay.html
+ *  Application     :     Mofluid App for your Magento Site
+ *  Description     :     Redirect to payment gateway
+ *  Organization    :     Mofluid
+ *  Org URL         :     http://www.mofluid.com
+ -----------------------------------------------------------------------------
+ Copyright 2013: Ebizon Netinfo Pvt. Ltd. All rights reserved
+ -----------------------------------------------------------------------------
+ *****************************************************************************/
+ -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=1"/>
+        <title></title>
+        <!-- All Js(js/) and Css(css/) are included here  -->
+        <script type="text/javascript" src="js/mofluid.include-0.0.1.js"></script>
+        <script type="text/javascript">
+            /*
+             *Function call when page loads
+             */
+        
+        var Base64 = {
+            
+            // private property
+            _keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+            
+            // public method for encoding
+            encode : function (input) {
+                var output = "";
+                var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+                var i = 0;
+                
+                input = Base64._utf8_encode(input);
+                
+                while (i < input.length) {
+                    
+                    chr1 = input.charCodeAt(i++);
+                    chr2 = input.charCodeAt(i++);
+                    chr3 = input.charCodeAt(i++);
+                    
+                    enc1 = chr1 >> 2;
+                    enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+                    enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+                    enc4 = chr3 & 63;
+                    
+                    if (isNaN(chr2)) {
+                        enc3 = enc4 = 64;
+                    } else if (isNaN(chr3)) {
+                        enc4 = 64;
+                    }
+                    
+                    output = output +
+                    this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) +
+                    this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+                    
+                }
+                
+                return output;
+            },
+            
+            // public method for decoding
+            decode : function (input) {
+                var output = "";
+                var chr1, chr2, chr3;
+                var enc1, enc2, enc3, enc4;
+                var i = 0;
+                
+                input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+                
+                while (i < input.length) {
+                    
+                    enc1 = this._keyStr.indexOf(input.charAt(i++));
+                    enc2 = this._keyStr.indexOf(input.charAt(i++));
+                    enc3 = this._keyStr.indexOf(input.charAt(i++));
+                    enc4 = this._keyStr.indexOf(input.charAt(i++));
+                    
+                    chr1 = (enc1 << 2) | (enc2 >> 4);
+                    chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+                    chr3 = ((enc3 & 3) << 6) | enc4;
+                    
+                    output = output + String.fromCharCode(chr1);
+                    
+                    if (enc3 != 64) {
+                        output = output + String.fromCharCode(chr2);
+                    }
+                    if (enc4 != 64) {
+                        output = output + String.fromCharCode(chr3);
+                    }
+                    
+                }
+                
+                output = Base64._utf8_decode(output);
+                
+                return output;
+                
+            },
+            
+            // private method for UTF-8 encoding
+            _utf8_encode : function (string) {
+                string = string.replace(/\r\n/g,"\n");
+                var utftext = "";
+                
+                for (var n = 0; n < string.length; n++) {
+                    
+                    var c = string.charCodeAt(n);
+                    
+                    if (c < 128) {
+                        utftext += String.fromCharCode(c);
+                    }
+                    else if((c > 127) && (c < 2048)) {
+                        utftext += String.fromCharCode((c >> 6) | 192);
+                        utftext += String.fromCharCode((c & 63) | 128);
+                    }
+                    else {
+                        utftext += String.fromCharCode((c >> 12) | 224);
+                        utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+                        utftext += String.fromCharCode((c & 63) | 128);
+                    }
+                    
+                }
+                
+                return utftext;
+            },
+            
+            // private method for UTF-8 decoding
+            _utf8_decode : function (utftext) {
+                var string = "";
+                var i = 0;
+                var c = c1 = c2 = 0;
+                
+                while ( i < utftext.length ) {
+                    
+                    c = utftext.charCodeAt(i);
+                    
+                    if (c < 128) {
+                        string += String.fromCharCode(c);
+                        i++;
+                    }
+                    else if((c > 191) && (c < 224)) {
+                        c2 = utftext.charCodeAt(i+1);
+                        string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+                        i += 2;
+                    }
+                    else {
+                        c2 = utftext.charCodeAt(i+1);
+                        c3 = utftext.charCodeAt(i+2);
+                        string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+                        i += 3;
+                    }
+                    
+                }
+                
+                return string;
+            }
+            
+        }
+        
+        function removeUnrequiredChar(data) {
+            var result = '';
+            for(var i=0;i<=data.length;i++) {
+                var mchar = data.charAt(i);
+                if(mchar == '"' || mchar == "," || mchar == "'" || mchar == ":" || mchar == "{" || mchar == "}" || mchar == "[" || mchar == "]") {
+                    result += mchar;
+                }
+                else if(mchar == '@' || mchar == "." || mchar == "(" || mchar == ")" || mchar == "-" || mchar == "_" || mchar == ";" || mchar == "/") {
+                    result += mchar;
+                }
+                else if(/^[a-z0-9]+$/i.test(mchar)) {
+                    result += mchar;
+                }
+            }
+            return result;
+        }
+        
+        
+        function onLoad(){
+            document.getElementById("heading").innerHTML = "<h2>" +  locale.message.text["paypal_redirect_message"] +  "</h2>";
+            document.getElementById("redirected").innerHTML = "" + locale.message.text["paypal_auto_redirect_message"] + "";
+            document.getElementById("paypal_submit_btn").innerHTML ='<input type="button" value="'+locale.message.button["click_here"]+'" style="width:100px" onclick="javascript:submit_form();">';
+            
+            try {
+                var data=queryValue();
+                data= Base64.decode(data);
+                data = removeUnrequiredChar(data);
+                data=JSON.parse(data);
+                var business_mail = data.business_mail;
+                var first_name =  data.firstname;
+                var last_name =  data.lastname;
+                var total_amount = data.total_amount;
+                var mofluid_order_id = data.mofluid_order_id;
+                var pay_url=data.pay_url;
+                var div_data = '<form action="'+pay_url+'" name="paypal_form" id="paypal_form" method="post"><input type="hidden" name="cmd" value="_cart"/><input type="hidden" name="upload" value="1"/><input type="hidden" name="mofluid_order_id" value="'+mofluid_order_id+'"/><input type="hidden" name="currency_code" value="'+Currency.getStoreCurrencySymbol()+'"/><input type="hidden" id="first_name" name="first_name" value="'+first_name+'"/><input type="hidden" id="last_name" name="last_name" value="'+last_name+'"/><input type="hidden" id="business" name="business" value="'+ business_mail+'"/>';
+                var j=1;
+                div_data += '<input type="hidden" name="item_name_'+j+'" value="'+mofluid_order_id+'"/><input type="hidden" name="amount_'+j+'" value="'+total_amount+'"/><input type="hidden" name="quantity_'+j+'" value="1"/>';
+                div_data += '<input type="hidden" name="return" value="'+config.url.api+'?service=paymentresponse&mofluidpayaction=success&store=1&mofluid_order_id='+mofluid_order_id+'"/><input type="hidden" name="cancel_return" value="'+config.url.api+'?service=paymentresponse&mofluidpayaction=cancel&store=1&mofluid_order_id='+mofluid_order_id+'"/><input type="hidden" name="notify_url" value="'+config.url.api+'?service=paymentresponse&mofluidpayaction=ipn&store=1"/></form>';
+                document.getElementById('form_div').innerHTML= div_data;
+            }
+            catch(err) {
+                console.log('Error : '+err.message);
+            }
+            document.forms['paypal_form'].submit();
+        }
+        
+        function submit_form(){
+            document.forms["paypal_form"].submit();
+        }
+        /*
+         *Function to get parameter from url
+         *@param: none
+         *@return: Data attach with url
+         */
+        function queryValue() {
+            var qrStr = window.location.search;
+            if (qrStr)
+            var qrvalue = (qrStr.split("?")[1].split("=")[1]);
+            return decodeURIComponent(qrvalue);
+        }
+        </script>
+    </head>
+    <body onload="onLoad()">
+        <div data-role="page" id="mainPage">
+            <center><div id="heading"></div></center>
+            <center><img src="images/loading.gif"/></center>
+            <div id="form_div"></div>
+            <center><br/><br/><span id="redirected"></span><br/><br/>
+            <div id="paypal_submit_btn"> </div>
+                <!--<input type="button" value="Click Here" style="width:100px" onclick="javascript:submit_form();">-->
+                    </center>
+        </div>
+    </body>
+</html>

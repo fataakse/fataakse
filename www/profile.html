@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height"/>
+        <meta name="msapplication-tap-highlight" content="no" />
+        <title>Mofluid</title>
+        <script type="text/javascript" src="js/mofluid.include-0.0.1.js"></script>
+        <script type="text/javascript" langauge="javascript">
+            function onLoad(){
+                checkLoginStatus();
+                verify_session();
+                $("#mofluid_home_a").html(locale.message.button["home"]); 
+                $("#mofluid_myaccount_a").html(locale.message.button["my_account"]);
+                $("#mofluid_editprofile_a").html(locale.message.button["edit_profile"]);
+                $("#mofluid_myorders_a").html(locale.message.button["my_orders"]);
+                $("#mofluid_signout_a").html(locale.message.button["sign_out"]);
+                $("#mofluid_signin_a").html(locale.message.button["sign_in"]);
+                $('#profile .ui-btn').html(locale.message.text["personal_information"]);
+                $('#default_bill_address .ui-btn').html(locale.message.text["billing_address"]);
+                $('#default_shipp_address .ui-btn').html(locale.message.text["shipping_address"]);
+                $("#searchFilter").attr("placeholder",locale.message.text["search_by_name"]);
+                try {
+                    var MYSTORE = JSON.parse(localStorage[config.app.storage_key+"_store"]);
+                    document.title = MYSTORE["store"]["name"];
+                    $("#storelabel").html(MYSTORE["store"]["name"]);
+                } catch(err) {
+                    console.log(err.message);
+                }
+                var Session = JSON.parse(localStorage[config.app.storage_key+'_session']);
+                var customerid = Session["customer_id"];
+                $.getJSON(config.url.api+"?callback=?"+"&store="+config.store.default+"&service=myprofile&customerid="+customerid,
+                          function (response) {
+                          var cust_name = locale.message.text["full_name"] + ' : ' +response["CustomerInfo"]["firstname"]+" "+response["CustomerInfo"]["lastname"];
+                          var cust_email = locale.message.text["email_address"] + ' : ' +response["CustomerInfo"]["email"];
+                          var cust_member_since = locale.message.text["member_since"] + ' : ' +response["CustomerInfo"]["membersince"];
+                          
+                          $("#ac_name").html(cust_name);
+                          $("#ac_email").html(cust_email);
+                          $("#ac_member_since").html(cust_member_since);
+                          var cust_bill_firstname, cust_bill_lastname, cust_bill_contact_no, cust_bill_city, cust_bill_country, cust_bill_pincode, cust_bill_street, cust_bill_region, cust_bill_company;
+                          var shipp_bill_firstname, shipp_bill_lastname, shipp_bill_contact_no, shipp_bill_city, shipp_bill_country, shipp_bill_pincode, shipp_bill_street, shipp_bill_region, shipp_bill_company;
+                          cust_bill_firstname = response["BillingAddress"]["firstname"];
+                          cust_bill_lastname = response["BillingAddress"]["lastname"];
+                          cust_bill_contact_no = response["BillingAddress"]["contactno"];
+                          cust_bill_city = response["BillingAddress"]["city"];
+                          cust_bill_country = response["BillingAddress"]["countryid"];
+                          cust_bill_pincode = response["BillingAddress"]["pincode"];
+                          cust_bill_street = response["BillingAddress"]["street"];
+                          cust_bill_region = response["BillingAddress"]["region"];
+                          cust_bill_company = response["BillingAddress"]["company"];
+                          cust_shipp_firstname = response["ShippingAddress"]["firstname"];
+                          cust_shipp_lastname = response["ShippingAddress"]["lastname"];
+                          cust_shipp_contact_no = response["ShippingAddress"]["contactno"];
+                          cust_shipp_city = response["ShippingAddress"]["city"];
+                          cust_shipp_country = response["ShippingAddress"]["countryid"];
+                          cust_shipp_pincode = response["ShippingAddress"]["pincode"];
+                          cust_shipp_street = response["ShippingAddress"]["street"];
+                          cust_shipp_region = response["ShippingAddress"]["region"];
+                          cust_shipp_company = response["ShippingAddress"]["company"];
+                          if(cust_bill_contact_no == null || cust_bill_contact_no == "") {
+                          $("#ac_contact_no_row").css("display","none");
+                          $("#cust_bill_contact_row").css("display","none");
+                          }
+                          else {
+                          $("#ac_contact_no").html(locale.message.text["contact_no"] + ' : ' +cust_bill_contact_no);
+                          $("#cust_bill_contact_no").html(cust_bill_contact_no);
+                          }
+                          if(cust_bill_firstname == null || cust_bill_firstname == "")
+                          $("#cust_bill_name").html(locale.message.text["no_default_billing_address_found"]);
+                          else{
+                          if(cust_bill_lastname==""||cust_bill_lastname==null){
+                          cust_bill_lastname='';
+                          $("#cust_bill_name").html(cust_bill_firstname+" "+cust_bill_lastname);
+                          }
+                          else
+                          $("#cust_bill_name").html(cust_bill_firstname+" "+cust_bill_lastname);
+                          }
+                          if(cust_bill_company == null || cust_bill_company == "")
+                          $("#cust_bill_company_row").css("display","none");
+                          else
+                          $("#cust_bill_company").html(cust_bill_company);
+                          if(cust_bill_street == null || cust_bill_street == "")
+                          $("#cust_bill_street_row").css("display","none");
+                          else
+                          $("#cust_bill_street").html(cust_bill_street);
+                          
+                          if(cust_bill_region == null || cust_bill_region == "")
+                          $("#cust_bill_region_row").css("display","none");
+                          else
+                          $("#cust_bill_region").html(cust_bill_region);
+                          if(cust_bill_city == null || cust_bill_city == "")
+                          $("#cust_bill_city_row").css("display","none");
+                          else
+                          $("#cust_bill_city").html(cust_bill_city);
+                          if(cust_bill_country == null || cust_bill_country == "")
+                          $("#cust_bill_country_row").css("display","none");
+                          else
+                          $("#cust_bill_country").html(cust_bill_country);
+                          if(cust_bill_pincode == null || cust_bill_pincode == "")
+                          $("#cust_bill_pincode_row").css("display","none");
+                          else
+                          $("#cust_bill_pincode").html(cust_bill_pincode);
+                          if(cust_shipp_firstname == null || cust_shipp_firstname == "")
+                          $("#cust_shipp_name").html(locale.message.text["no_default_shipping_address"]);
+                          else{
+                          if(cust_shipp_lastname==""||cust_shipp_lastname==null){
+                          cust_shipp_lastname="";
+                          $("#cust_shipp_name").html(cust_shipp_firstname+" "+cust_shipp_lastname);
+                          }
+                          else
+                          $("#cust_shipp_name").html(cust_shipp_firstname+" "+cust_shipp_lastname);
+                          }
+                          if(cust_shipp_contact_no == null || cust_shipp_contact_no == "")
+                          $("#cust_shipp_contactno_row").css("display","none");
+                          else
+                          $("#cust_shipp_contact_no").html(cust_shipp_contact_no);
+                          if(cust_shipp_company == null || cust_shipp_company == "")
+                          $("#cust_shipp_company_row").css("display","none");
+                          else
+                          $("#cust_shipp_company").html(cust_shipp_company);
+                          if(cust_shipp_street == null || cust_shipp_street == "")
+                          $("#cust_shipp_street_row").css("display","none");
+                          else
+                          $("#cust_shipp_street").html(cust_shipp_street);
+                          if(cust_shipp_region == null || cust_shipp_region == "")
+                          $("#cust_shipp_region_row").css("display","none");
+                          else
+                          $("#cust_shipp_region").html(cust_shipp_region);
+                          if(cust_shipp_city == null || cust_shipp_city == "")
+                          $("#cust_shipp_city_row").css("display","none");
+                          else
+                          $("#cust_shipp_city").html(cust_shipp_city);
+                          if(cust_shipp_country == null || cust_shipp_country == "")
+                          $("#cust_shipp_country_row").css("display","none");
+                          else
+                          $("#cust_shipp_country").html(cust_shipp_country);
+                          if(cust_shipp_pincode == null || cust_shipp_pincode == "")
+                          $("#cust_shipp_pincode_row").css("display","none");
+                          else
+                          $("#cust_shipp_pincode").html(cust_shipp_pincode);
+                          });
+
+                
+            
+            }
+        /*
+         *Function to capitalise first letter
+         *@param
+         *@return
+         */
+        function capitaliseFirstLetter(string){
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+
+
+        
+            </script>
+    </head>
+    <body onLoad="onLoad()">
+        <div data-role="page" id="mainpage" >
+            
+            <div data-role="header"  data-position="fixed" data-tap-toggle="false">
+            <div id="mainheader" class="mainheader">
+            	<div class="navigation_button">
+                        <img class="" onclick="history.back();" src="media/images/icons/elegant/back_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/back_32x32.png'" />
+                </div>
+                
+                <div class="navigation_button">
+                    <a href="#myPanel">
+                        <img class="navigation_icon" src="media/images/icons/elegant/menu_32x32.png" onerror="this.onerror=null;this.src='media/images/icons/elegant/menu_32x32.png'" />
+                    </a>
+                </div>
+                
+                <div class="navigation_search" align="center">
+                    <div class="searchbox">
+                       <form name="serachForm" action="javascript:custom_search();">
+                           <div>
+                               <input id="searchFilter" class="search-box" type="search" data-type="search" placeholder="" data-theme="a" />
+                               <ul id="suggestions" data-role="listview" data-inset="true" data-theme="a"></ul>
+                           </div>
+                       </form>
+                   </div>
+                </div>
+                
+                <div class="navigation_cart">
+                    <a href="javascript:void(0);" onclick="redirectTopage('cart.html')">
+                        <img  class="cart_icon" src="media/images/icons/elegant/cart_32x32.png" onerror="this.onerror=null;this.src='images/cart.png'"/>
+                        <div class="cartamount">
+                            <div class="cartNew" id="cartProducts">0</div>
+                        </div>
+                    </a>
+                </div>
+            <div id="push-header" style="display:none">
+                   <a href="javascript:hidePush();" style="float: right;margin: 5px 5px 5px 5px;background-color: #e5e5e5;width: 25px;height: 25px;border-radius: 100%;padding: 5px;background-image: url(media/images/icons/elegant/cross_32x32.png);background-position: center;background-size: 80% 80%;margin-right:5px;">&nbsp;</a>
+                   <p id='push-msg' style='text-align:justify;font-weight:400;padding:0px 10px;line-height:17px;font-size:14px;width:95%'>&nbsp;</p>
+               </div></div>
+            </div>
+            <div data-role="content">
+                
+                <div id="loginbox" class="loginbox" align="center">
+                    
+                    <div id="myprofile_content" class="myprofile" style="border:2px solid #e5e5e5;background-color:#ffffff;padding:7px">
+                   
+                   <div id="profile" data-role="collapsible" data-inset="false" data-collapsed-icon="arrow-rr" data-expanded-icon="arrow-dd" style="margin-bottom:10px">
+                       <h3></h3>
+                       <div  id="personal_info" align="left">
+                           <div id="ac_name" style="padding:3px;"></div>
+                           <div id="ac_email" style="padding:3px;"></div>
+                           <div id="ac_contact_no" style="padding:3px;"></div>
+                           <div id="ac_member_since" style="padding:3px;"></div>
+                       </div>
+                   </div>
+                   
+                   <div id="default_bill_address" data-role="collapsible" data-inset="false" data-collapsed-icon="arrow-rr" data-expanded-icon="arrow-dd" style="margin-bottom:10px">
+                       <h3></h3>
+                       <div  id="billing_address">
+                           <div id ="cust_bill_name_row" style="padding:3px;"><span id=cust_bill_name>No Default Billing Address</span></div>
+                           <div id ="cust_bill_company_row" style="padding:3px;"><span id=cust_bill_company></span></div>
+                           <div id ="cust_bill_contact_row" style="padding:3px;"><span id=cust_bill_contact_no></span></div>
+                           <div id ="cust_bill_street_row" style="padding:3px;"><span id=cust_bill_street></span></div>
+                           <div id ="cust_bill_city_row" style="padding:3px;"><span id=cust_bill_city></span></div>
+                           <div id ="cust_bill_region_row" style="padding:3px;"><span id=cust_bill_region></span></div>
+                           <div id ="cust_bill_country_row" style="padding:3px;"><span id=cust_bill_country></span></div>
+                           <div id ="cust_bill_pincode_row" style="padding:3px;"><span id=cust_bill_pincode></span></div>
+                       </div>
+                   </div>
+                   <div id="default_shipp_address" data-role="collapsible" data-inset="false" data-collapsed-icon="arrow-rr" data-expanded-icon="arrow-dd" style="margin-bottom:10px">
+                       <h3></h3>
+                       <div  id="shipping_address">
+                           <div id ="cust_shipp_name_row" style="padding:3px;"><span id=cust_shipp_name>No Default Shipping Address</span></div>
+                           <div id ="cust_shipp_company_row" style="padding:3px;"><span id=cust_shipp_company></span></div>
+                           <div id ="cust_shipp_contact_row" style="padding:3px;"><span id=cust_shipp_contact_no></span></div>
+                           <div id ="cust_shipp_street_row" style="padding:3px;"><span id=cust_shipp_street></span></div>
+                           <div id ="cust_shipp_city_row" style="padding:3px;"><span id=cust_shipp_city></span></div>
+                           <div id ="cust_shipp_region_row" style="padding:3px;"><span id=cust_shipp_region></span></div>
+                           <div id ="cust_shipp_country_row" style="padding:3px;"><span id=cust_shipp_country></span></div>
+                           <div id ="cust_shipp_pincode_row" style="padding:3px;"><span id=cust_shipp_pincode></span></div>
+                       </div>
+                   </div>
+
+
+                    </div>
+
+                    
+                </div>
+                
+            </div>
+            
+             <div data-role="footer" style="display:none"></div>
+            
+            
+            <div data-role="panel" id="myPanel"   data-swipe-close="true"  >
+                <ul data-role="listview" id="left_navigation">
+                    <li id="mofluid_home"><a href="javascript:void(0);" onclick="redirectTopage('index.html');">Home</a></li>
+                </ul>
+                
+            </div>
+        </div>
+    </body>
+</html>
