@@ -285,7 +285,7 @@ var CartLayout = new function()  {
 		  }
 		  else {
 			  cart_info_html += '<div id="shipping_amount_row" class="shipping_amount_row">';
-			  cart_info_html += '<div id="shipping_amount_label" class="shipping_amount_label">'+locale.message.text["shipping_method"]+' - '+shipping_method_text+'</div><div id="shipping_amount_value" class="shipping_amount_value product_price_color">'+Currency.getStoreCurrencySymbol()+parseFloat(cart["shipping_amount"]).toFixed(2)+'</div>';
+			  cart_info_html += '<div id="shipping_amount_label" class="shipping_amount_label">'+locale.message.text["shipping"]/*+' - '+shipping_method_text*/+'</div><div id="shipping_amount_value" class="shipping_amount_value product_price_color">'+Currency.getStoreCurrencySymbol()+parseFloat(cart["shipping_amount"]).toFixed(2)+'</div>';
 			  cart_info_html += '</div>';
 			  
 		  }

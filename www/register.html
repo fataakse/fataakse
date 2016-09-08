@@ -46,8 +46,8 @@
         
         function submitform() {
             var first_name, last_name, password, confirm_password, email;
-            first_name = $("#firstname").val();
-            last_name = $("#lastname").val();
+            first_name = $("#firstname").val().trim();
+            last_name = $("#lastname").val().trim();
             email = $("#email").val().trim();
             mobile = $("#mobile").val().trim();
             password = $("#password").val();

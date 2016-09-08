@@ -483,6 +483,7 @@ function fetchStoredetail_preview() {
 }
 
 function updateStoreDetail(response) {
+    localStorage.setItem('free_shipping_amt', response.free_shipping_amt);
     setGoogleAnalytics(response.analytics);
     setApplicationFooter(response.store);
     if(isHomePage)
@@ -577,7 +578,6 @@ function fetchStoredetail() {
                                                        });
                                         localStorage.setItem('c_time', response.store.cache_setting.cache_time);
                                         localStorage.setItem('c_status', response.store.cache_setting.status);
-                                        localStorage.setItem('free_shipping_amt', response.free_shipping_amt);
                                         
                                         
                                         console.log(response);
@@ -635,7 +635,6 @@ function fetchStoredetail() {
                                                        });
                                         localStorage.setItem('c_time', response.store.cache_setting.cache_time);
                                         localStorage.setItem('c_status', response.store.cache_setting.status);
-                                        localStorage.setItem('free_shipping_amt', response.free_shipping_amt);
                                         
                                         console.log(response);
                                         updateStoreDetail(response);

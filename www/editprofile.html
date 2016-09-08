@@ -133,7 +133,7 @@
         function Editaddress(){
             first_name = $("#fname").val();
             last_name =  $("#lname").val();
-            email = $("#email").val();
+            email = $("#email").val().trim();
             if(first_name == "") {
                 if (config.app.platform=='ios' || config.app.platform=='android'){
                     navigator.notification.alert(locale.message.alert["firstname_blank"],function () {},config.app.name, locale.message.button["close"]);

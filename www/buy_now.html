@@ -113,6 +113,9 @@
                                 function (response) {
                                     $("#email").val(response["CustomerInfo"]["email"]);
                                     if(response["BillingAddress"]==null||response["BillingAddress"]==""){
+                                        $("#name").val(response["CustomerInfo"]["firstname"]);
+                                        $("#blname").val(response["CustomerInfo"]["lastname"]);
+                                        $("#phone").val(response["CustomerInfo"]["mobile_number"]);
                                         $("#country").val(countryresponse["mofluid_default_country"]["country_id"]);
                                         $("#state").val(config.customer_info.state);
                                         /*$("#country").selectmenu('refresh',true);
@@ -228,15 +231,6 @@
                         alert(locale.message.alert["firstname_blank"]);
                     }
                     $("#name").focus();
-                }
-                else if ($("#blname").val().trim() == "") {
-                    if (config.app.platform=='ios' || config.app.platform=='android'){
-                        navigator.notification.alert(locale.message.alert["lastname_blank"],function () {},config.app.name, locale.message.button["close"]);
-                    }
-                    else{
-                        alert(locale.message.alert["lastname_blank"]);
-                    }
-                    $("#blname").focus();
                 }
                 else if ($("#phone").val() == "") {
                     if (config.app.platform=='ios' || config.app.platform=='android'){
@@ -536,7 +530,7 @@
                                 <label for="pincode" style="font-size:14px;" id="zip_code"> </label> 
                                 <input id="pincode" name="pincode" type="text"/>
                                 </br>
-                                                              <div id="normal_shipping_div">
+                                                              <div id="normal_shipping_div" style="display:none">
                                     <label for="same" style="font-size:14px;" id="radio_shipping_1"></label>
                                     <input id="same" name="ship2myid" type="radio" value="sameshipaddress"/>
                                     </br>
@@ -544,7 +538,7 @@
                                     <input id="dame" name="ship2myid" type="radio"  value="diffshipaddress"/>
                                     </br>
                                 </div>
-                                <div id="shippingDetail">
+                                <div id="shippingDetail" style="display:none;">
                                     <h3 class="edit_heading" id="shipping_address"></h3>
                                     <label for="recName" style="font-size:14px;" id="first_name_1"> </label>
                                     <input id="recName" name="recName" type="text"/>
