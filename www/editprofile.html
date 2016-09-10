@@ -30,20 +30,20 @@
                 $('#country_label').html(locale.message.text["country"]);
                 $('#state_txt').html(locale.message.text["state"]);
                 $('#zip_code').html(locale.message.text["zipcode"]);
-                $('#first_name_2').html(locale.message.text["first_name"]);
+                /*$('#first_name_2').html(locale.message.text["first_name"]);
                 $('#last_name_2').html(locale.message.text["last_name"]);
                 $('#mobile_2').html(locale.message.text["contact_no"]);
                 $('#address_label_2').html(locale.message.text["address"]);
                 $('#city_2').html(locale.message.text["city"]);
                 $('#country_label_2').html(locale.message.text["country"]);
                 $('#state_2').html(locale.message.text["state"]);
-                $('#zip_code_2').html(locale.message.text["zipcode"]);
+                $('#zip_code_2').html(locale.message.text["zipcode"]);*/
                 $('#email_address').html(locale.message.text["email_address"]);
                 $('#select').html(locale.message.text["select"]);
                 $('#select_2').html(locale.message.text["select"]);
                 $('#select_3').html(locale.message.text["select"]);
                 $('#default_billing_address').html(locale.message.text["default"] + ' ' + locale.message.text["billing_address"]);
-                $('#default_shipping_address').html(locale.message.text["default"] + ' ' + locale.message.text["shipping_address"]);
+                /*$('#default_shipping_address').html(locale.message.text["default"] + ' ' + locale.message.text["shipping_address"]);*/
                 $("#searchFilter").attr("placeholder",locale.message.text["search_by_name"]);
                 
                 $('#updatebtn').html('<input type="button" data-role="button" data-theme="b" value="'+ locale.message.button["edit_information"] +'" onclick="Editaddress();"/>');
@@ -85,19 +85,19 @@
                                     else{
                                     var blname=response["BillingAddress"]["lastname"];
                                     if(blname== null)
-                                    blname="";
-                                    $("#name").val(response["BillingAddress"]["firstname"]);
-                                    $("#blname").val(blname);
-                                    $("#phone").val(response["BillingAddress"]["contactno"]);
-                                    $("#address").val(response["BillingAddress"]["street"]);
-                                    $("#city").val(response["BillingAddress"]["city"]);
-                                    $("#country").val(response["BillingAddress"]["countryid"]);
-                                    $("#country").selectmenu('refresh',true);
-                                    $("#country").trigger('change');
-                                    $("#pincode").val(response["BillingAddress"]["pincode"]);
-                                    $("#state").val(response["BillingAddress"]["region"]);
+                                        blname="";
+                                        $("#name").val(response["BillingAddress"]["firstname"]);
+                                        $("#blname").val(blname);
+                                        $("#phone").val(response["BillingAddress"]["contactno"]);
+                                        $("#address").val(response["BillingAddress"]["street"]);
+                                        $("#city").val(response["BillingAddress"]["city"]);
+                                        $("#country").val(response["BillingAddress"]["countryid"]);
+                                        $("#country").selectmenu('refresh',true);
+                                        $("#country").trigger('change');
+                                        $("#pincode").val(response["BillingAddress"]["pincode"]);
+                                        $("#state").val(response["BillingAddress"]["region"]);
                                     }
-                                    if(response["ShippingAddress"]==null||response["ShippingAddress"]==""){
+                                   /* if(response["ShippingAddress"]==null||response["ShippingAddress"]==""){
                                         $("#Scountry").val(countryresponse["mofluid_default_country"]["country_id"]);
                                         $("#Scountry").selectmenu('refresh',true);
                                         $("#Scountry").trigger('change');
@@ -116,11 +116,11 @@
                                     $("#Scountry").trigger('change');
                                     $("#Spincode").val(response["ShippingAddress"]["pincode"]);
                                     $("#Sstate").val(response["ShippingAddress"]["region"]);
-                                    }
+                                    }*/
                                     });
-                          print_country(countryresponse);
-                          print_countryy(countryresponse);
-                          });
+                                    //print_country(countryresponse);
+                                    print_countryy(countryresponse);
+                            });
                 
             }
         
@@ -303,17 +303,8 @@
                 }
                 $("#state").focus();
             }
-            else if ($("#pincode").val() == "") {
-                if (config.app.platform=='ios' || config.app.platform=='android'){
-                    navigator.notification.alert(locale.message.alert["empty_zipcode_message"],function () {
-                                                 },config.app.name, locale.message.button["close"]);
-                }
-                else {
-                    alert(locale.message.alert["empty_zipcode_message"]);
-                }
-                $("#pincode").focus();
-            }
-            else if (isValidalphanumeric($("#pincode").val()) == false) {
+            
+            else if ($("#pincode").val() != '' && isValidalphanumeric($("#pincode").val()) == false) {
                 if (config.app.platform=='ios' || config.app.platform=='android'){
                     navigator.notification.alert(locale.message.alert["invalid_zipcode_message"],function () {
                                                  },config.app.name, locale.message.button["close"]);
@@ -323,140 +314,28 @@
                 }
                 $("#pincode").focus();
             }
-            else if ($("#Sname").val() == "" ) {
-                if (config.app.platform=='ios' || config.app.platform=='android'){
-                    navigator.notification.alert(locale.message.alert["firstname_blank"],function () {
-                                                 },config.app.name, locale.message.button["close"]);
-                }
-                else {
-                    alert(locale.message.alert["firstname_blank"]);
-                }
-                $("#Sname").focus();
-            }
-            else if ($("#Slname").val() == "" ) {
-                if (config.app.platform=='ios' || config.app.platform=='android'){
-                    navigator.notification.alert(locale.message.alert["lastname_blank"],function () {
-                                                 },config.app.name, locale.message.button["close"]);
-                }
-                else {
-                    alert(locale.message.alert["lastname_blank"]);
-                }
-                $("#Slname").focus();
-            }
-            else if ($("#Sphone").val() == "") {
-                if (config.app.platform=='ios' || config.app.platform=='android'){
-                    navigator.notification.alert(locale.message.alert["contact_no_blank"],function () {
-                                                 },config.app.name, locale.message.button["close"]);
-                }
-                else {
-                    alert(locale.message.alert["contact_no_blank"]);
-                }
-                $("#Sphone").focus();
-            }
-            else if (IsNumeric($("#Sphone").val()) == false) {
-                if (config.app.platform=='ios' || config.app.platform=='android'){
-                    navigator.notification.alert(locale.message.alert["invalid_contact_message"],function () {
-                                                 },config.app.name, locale.message.button["close"]);
-                }
-                else {
-                    alert(locale.message.alert["invalid_contact_message"]);
-                }
-                $("#Sphone").focus();
-            }
-            else if ($("#Saddress").val() == "" ) {
-                if (config.app.platform=='ios' || config.app.platform=='android'){
-                    navigator.notification.alert(locale.message.alert["empty_address"],function () {
-                                                 },config.app.name, locale.message.button["close"]);
-                }
-                else {
-                    alert(locale.message.alert["empty_address"]);
-                }
-                $("#Saddress").focus();
-            }
-            
-            else if(!validateAddress($("#Saddress").val())){
-                if (config.app.platform=='ios' || config.app.platform=='android'){
-                    navigator.notification.alert(locale.message.alert["invalid_city_message"],function () {
-                                                 },config.app.name, locale.message.button["close"]);
-                }
-                else{
-                    alert(locale.message.alert["invalid_city_message"]);
-                }
-                $("#address").focus();
-            }
-            
-            else if ($("#Scity").val() == "" ) {
-                if (config.app.platform=='ios' || config.app.platform=='android'){
-                    navigator.notification.alert(locale.message.alert["empty_city_message"],function () {
-                                                 },config.app.name, locale.message.button["close"]);
-                }
-                else {
-                    alert(locale.message.alert["empty_city_message"]);
-                }
-                $("#Scity").focus();
-            }
-            else if ($("#Scountry").val() == "Select") {
-                if (config.app.platform=='ios' || config.app.platform=='android'){
-                    navigator.notification.alert(locale.message.alert["empty_country_message"],function () {
-                                                 
-                                                 }, config.app.name, locale.message.button["close"]);
-                }
-                else {
-                    alert(locale.message.alert["empty_country_message"]);
-                }
-                $("#Scountry").focus();
-            }
-            else if ($("#Sstate").val() == "") {
-                if (config.app.platform=='ios' || config.app.platform=='android'){
-                    navigator.notification.alert(locale.message.alert["empty_state_message"],function () {
-                                                 }, config.app.name, locale.message.button["close"]);
-                }
-                else {
-                    alert(locale.message.alert["empty_state_message"]);
-                }
-                $("#Sstate").focus();
-            }
-            else if ($("#Spincode").val() == "") {
-                if (config.app.platform=='ios' || config.app.platform=='android'){
-                    navigator.notification.alert(locale.message.alert["empty_zipcode_message"],function () {
-                                                 }, config.app.name, locale.message.button["close"]);
-                }
-                else {
-                    alert(locale.message.alert["empty_zipcode_message"]);
-                }
-                $("#Spincode").focus();
-            }
-            else if (isValidalphanumeric($("#Spincode").val()) == false) {
-                if (config.app.platform=='ios' || config.app.platform=='android'){
-                    navigator.notification.alert(locale.message.alert["invalid_zipcode_message"],function () {},config.app.name, locale.message.button["close"]);
-                }
-                else {
-                    alert(locale.message.alert["invalid_zipcode_message"]);
-                }
-                $("#Spincode").focus();
-            }
             else{
                 $("#updatebtn").html('<center><img src="media/images/default/loading.gif"></center>');
-                var firstpname = $("#fname").val();
-                var lastpname = $("#lname").val();
-                var pemail = $("#email").val();
+                var firstpname = $("#fname").val().trim();
+                var lastpname = $("#lname").val().trim();
+                var pemail = $("#email").val().trim();
                 var name = $("#name").val();
-                var firstname = $("#name").val();
-                var lastname = $("#blname").val();
+                var firstname = $("#name").val().trim();
+                var lastname = $("#blname").val().trim();
                 var phone = $("#phone").val();
                 var address = $("#address").val();
                 var city  = $("#city").val();
                 var state = $("#state").val();
                 var country = $("#country").val();
                 var pincode = $("#pincode").val();
-                var recfname = $("#Sname").val();
+                /*var recfname = $("#Sname").val();
                 var reclname = $("#Slname").val();
                 var recipientMobile = $("#Sphone").val();
                 var shippingAddress = $("#Saddress").val();
                 var shippingCity = $("#Scity").val();
                 var shippingCountry = $("#Scountry").val();
                 var shippingState = $("#Sstate").val();
-                var shippingPincode = $("#Spincode").val();
+                var shippingPincode = $("#Spincode").val();*/
                 var pswd = generatePassword();
                 var Session = JSON.parse(localStorage[config.app.storage_key+'_session']);
                 var customerid = Session["customer_id"];
@@ -475,15 +354,15 @@
                 billaddress['billcountry']=country;
                 billaddress['billphone']=phone;
                 var shippaddress = new Object();
-                shippaddress['shippfname'] = recfname;
-                shippaddress['shipplname'] = reclname;
-                shippaddress['shippstreet1'] = shippingAddress;
+                shippaddress['shippfname'] = firstname;
+                shippaddress['shipplname'] = lastname;
+                shippaddress['shippstreet1'] = address;
                 shippaddress['shippstreet2'] = "";
-                shippaddress['shippcity'] = shippingCity;
-                shippaddress['shippstate'] = shippingState;
-                shippaddress['shipppostcode'] = shippingPincode;
-                shippaddress['shippcountry'] = shippingCountry;
-                shippaddress['shippphone'] = recipientMobile;
+                shippaddress['shippcity'] = city;
+                shippaddress['shippstate'] = state;
+                shippaddress['shipppostcode'] = pincode;
+                shippaddress['shippcountry'] = country;
+                shippaddress['shippphone'] = phone;
                 var bill = JSON.stringify(billaddress);
                 var shipp = JSON.stringify(shippaddress);
                 var uprofile = JSON.stringify(profile);
@@ -676,32 +555,6 @@
                                 </div>
                                 <label for="pincode" style="font-size:14px;" id="zip_code"></label>
                                 <input id="pincode" name="pincode" type="text"/>
-                                <h3 class="edit_heading" id="default_shipping_address"></h3> 
-                                <label for="Sname" style="font-size:14px;" id="first_name_2"></label>
-                                <input id="Sname" name="firstname" type="text"/>
-                                <label for="Slname" style="font-size:14px;" id="last_name_2"></label>
-                                <input id="Slname" name="lastname" type="text"/>
-                                <label for="Sphone" style="font-size:14px;" id="mobile_2"></label>
-                                <input name="Sphone" id="Sphone" type="text"/>
-                                <label for="Saddress" style="font-size:14px;" id="address_label_2"></label>
-                                <textarea name="Saddress" id="Saddress" id="address" cols=30 rows=4></textarea>
-                                <label for="Scity" style="font-size:14px;" id="city_2"></label>
-                                <input id="Scity" name="Scity" type="text"/>
-                                <label for="Scountry" style="font-size:14px;" id="country_label_2"></label>
-                                <select id="Scountry" name ="Scountry" onchange="printSstate();">
-                                    <!--option value='' style="font-size:14px;" id="select_2"></option-->
-                                </select>
-                                <label for="Sstate" style="font-size:14px;" id="state_2"></label>
-                                <div id="Sstate_textfield" >
-                                    <input id="Sstate" name="Sstate" type="text" />
-                                </div>
-                                <div id="Sstate_dropdown" style="display:none;">
-                                    <select id="Sstates" name ="state" onchange="saveSstate();">
-                                        <!--option value='' style="font-size:14px;" id="select_3"></option-->
-                                    </select>
-                                </div>
-                                <label for="Spincode" style="font-size:14px;" id="zip_code_2"></label>
-                                <input id="Spincode" name="Spincode" type="text"/>
                                 <div id="updatebtn" style="width:90%;margin:10px auto;" align="center">
                                     <!--<input type="button" data-role="button" data-theme="c" value="Update" onclick="Editaddress();"/>-->
                                 </div>
