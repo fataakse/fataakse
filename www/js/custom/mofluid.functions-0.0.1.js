@@ -228,25 +228,27 @@ function iabClose(event) {
  */
 function verify_session() {
     console.log("Session Checking Starts..");
+    redirectToLogin = false;
     if (localStorage[config.app.storage_key+'_session'] == null) {
-        var dirPath = dirname(location.href);
-        var fullPath = dirPath + "/login.html";
-        window.location = fullPath;
+        redirectToLogin = true;
     } else {
         var Session = JSON.parse(localStorage[config.app.storage_key+'_session']);
         if (Session != null) {
             var login_status = Session["login_status"];
             if (login_status != "Active") {
                 localStorage[config.app.storage_key+'_session'] = null;
-                var dirPath = dirname(location.href);
-                var fullPath = dirPath + "/login.html";
-                window.location = fullPath;
+                redirectToLogin = true;
             }
         } else {
-            var dirPath = dirname(location.href);
-            var fullPath = dirPath + "/login.html";
-            window.location = fullPath;
+            redirectToLogin = true;
         }
+    }
+
+    if(redirectToLogin){
+        var dirPath = dirname(location.href);
+        var fullPath = dirPath + "/login.html";
+        window.location = fullPath;
+        localStorage[config.app.storage_key+"_nextpage"] = location.href;
     }
     console.log("Session Checking Done..");
 }

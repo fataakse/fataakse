@@ -80,46 +80,46 @@
                 $("#loginbutton_div").html('<center><img src="media/images/default/loading.gif"></center>');
                 $.getJSON(config.url.api+"?callback=?"+"&store="+config.store.default+"&service=verifylogin"+"&username="+username+"&password="+Base64.encode(password),
                           function (response) {
-                          if(response["login_status"] == "0") {
-                           if (config.app.platform == 'ios' || config.app.platform == 'android')   {
-                          navigator.notification.alert(locale.message.alert["invalid_username__password_message"],function () {}, config.app.name, locale.message.button["close"]);
-                          }
-                          else {
-                          alert(locale.message.alert["invalid_username__password_message"]);
-                          }
-                          $("#loginbutton_div").html('<input type="submit" data-role="button" data-theme="b" id="loginbutton" name="loginbutton" value="Login" />');
-                          $("#loginbutton_div").trigger('create');
-                          }
-                          else if(response["login_status"] == "1") {
-                          localStorage[config.app.storage_key+"_Loginemail"]=username;
-                          loginStart(response["id"], response["firstname"], response["lastname"], response["username"], response["password"]);
-                            if (config.app.platform == 'ios' || config.app.platform == 'android')  {
-                          //navigator.notification.alert(locale.message.alert["login_success_message"] + response["firstname"],function () {}, config.app.name, locale.message.button["close"]);
-                          navigator.notification.alert(locale.message.alert["login_success_message"].replace("{{username}}",response["firstname"]),function () {}, config.app.name, locale.message.button["close"]);
-                          //locale.message.alert["login_success_message"].replace("{{username}}",response["firstname"])
-                          }
-                          else
-                          {
-                          alert(locale.message.alert["login_success_message"].replace("{{username}}",response["firstname"]));
-                          }
-                          if(localStorage[config.app.storage_key+"_nextpage"] == null || localStorage[config.app.storage_key+"_nextpage"] == "null") {
-                          redirectTopage('index.html');
-                          }
-                          else {
-                          var dirPath = dirname(location.href);
-                          var fullPath = dirPath +"/"+localStorage[config.app.storage_key+"_nextpage"];
-                          localStorage[config.app.storage_key+"_nextpage"] = null;
-                          window.location=fullPath;
-                          }
-                          }
-                          else {
-                           if (config.app.platform == 'ios' || config.app.platform == 'android') {
-                          navigator.notification.alert(locale.message.alert["server_not_responding"] ,function () {}, config.app.name, locale.message.button["close"]);
-                          }
-                          else {
-                          alert(locale.message.alert["server_not_responding"]);
-                          }
-                          }
+                            if(response["login_status"] == "0") {
+                              if (config.app.platform == 'ios' || config.app.platform == 'android')   {
+                                navigator.notification.alert(locale.message.alert["invalid_username__password_message"],function () {}, config.app.name, locale.message.button["close"]);
+                              }
+                              else {
+                                alert(locale.message.alert["invalid_username__password_message"]);
+                              }
+                              $("#loginbutton_div").html('<input type="submit" data-role="button" data-theme="b" id="loginbutton" name="loginbutton" value="Login" />');
+                              $("#loginbutton_div").trigger('create');
+                            }
+                            else if(response["login_status"] == "1") {
+                              localStorage[config.app.storage_key+"_Loginemail"]=username;
+                              loginStart(response["id"], response["firstname"], response["lastname"], response["username"], response["password"]);
+                              if (config.app.platform == 'ios' || config.app.platform == 'android')  {
+                                //navigator.notification.alert(locale.message.alert["login_success_message"] + response["firstname"],function () {}, config.app.name, locale.message.button["close"]);
+                                navigator.notification.alert(locale.message.alert["login_success_message"].replace("{{username}}",response["firstname"]),function () {}, config.app.name, locale.message.button["close"]);
+                                //locale.message.alert["login_success_message"].replace("{{username}}",response["firstname"])
+                              }
+                              else
+                              {
+                                alert(locale.message.alert["login_success_message"].replace("{{username}}",response["firstname"]));
+                              }
+                              console.log(localStorage[config.app.storage_key+"_nextpage"]);
+                              if(localStorage[config.app.storage_key+"_nextpage"] == null || localStorage[config.app.storage_key+"_nextpage"] == "null") {
+                                redirectTopage('index.html');
+                              }
+                              else {
+                                var fullPath = localStorage[config.app.storage_key+"_nextpage"];
+                                localStorage[config.app.storage_key+"_nextpage"] = null;
+                                window.location=fullPath;
+                              }
+                            }
+                            else {
+                             if (config.app.platform == 'ios' || config.app.platform == 'android') {
+                              navigator.notification.alert(locale.message.alert["server_not_responding"] ,function () {}, config.app.name, locale.message.button["close"]);
+                              }
+                              else {
+                              alert(locale.message.alert["server_not_responding"]);
+                              }
+                            }
                           });
             }
         }
